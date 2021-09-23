@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        // needed for lit-element decorators
+        "experimentalDecorators": true,
+        "module": "ES6",
+        "moduleResolution": "node",
+        // snowpack takes care of emitting
+        "noEmit": true,
+        // override keyword doesn't work with snowpack
+        "noImplicitOverride": false
+    },
+    "extends": "./tsconfig-base.json"
+}
