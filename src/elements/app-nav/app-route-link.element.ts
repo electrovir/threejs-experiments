@@ -1,10 +1,12 @@
-import {css, HTMLTemplateResult, LitElement} from 'lit';
+import {css, HTMLTemplateResult} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import {VirElement} from '../../render/vir-element';
 import {html} from '../../render/vir-html';
 import {createPathString, setRoutes} from '../../router/set-route';
 
 @customElement('vir-app-route-link')
-export class AppRouteLinkElement extends LitElement {
+export class AppRouteLinkElement extends VirElement {
+    public static readonly tagName = 'vir-app-route-link';
     static styles = css``;
     @property() private routes: string[] = [];
 

@@ -1,10 +1,12 @@
-import {css, HTMLTemplateResult, LitElement} from 'lit';
+import {css, HTMLTemplateResult} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {getEnumTypedValues, isEnumValue} from 'virmator/dist/augments/object';
+import {VirElement} from '../../render/vir-element';
 import {html} from '../../render/vir-html';
 import {addRouteListener} from '../../router/route-listener';
 import {SpaRoute} from '../../router/spa-routes';
 import './app-route-link.element';
+import {AppRouteLinkElement} from './app-route-link.element';
 
 export type ValidNavRoutes = [SpaRoute];
 
@@ -16,12 +18,13 @@ export class NavRouteUpdate extends CustomEvent<[SpaRoute]> {
 }
 
 @customElement('vir-app-nav')
-export class AppNavElement extends LitElement {
-    static styles = css`
+export class AppNavElement extends VirElement {
+    public static readonly tagName = 'vir-app-nav';
+    public static styles = css`
         :host {
             display: block;
         }
-        nav ul {
+        ul {
             padding: 16px;
             margin: 0;
             list-style-type: none;
@@ -30,7 +33,7 @@ export class AppNavElement extends LitElement {
             justify-content: center;
         }
 
-        nav ul li {
+        ul li {
             padding: 1px 16px;
             margin: 4px 0;
             border: 1px solid grey;
@@ -39,9 +42,8 @@ export class AppNavElement extends LitElement {
     `;
     @property() private spaRoute: SpaRoute | undefined;
 
-    constructor() {
-        super();
-        console.log('constructing');
+    public connectedCallback() {
+        super.connectedCallback();
         addRouteListener<ValidNavRoutes>(true, sanitizeSpaRoutes, (routes) => {
             const rootRoute = routes[0];
             if (rootRoute !== this.spaRoute) {
@@ -57,7 +59,7 @@ export class AppNavElement extends LitElement {
             ${getEnumTypedValues(SpaRoute).map((spaRoute) => {
                 return html`
                     <li>
-                        <vir-app-route-link .routes=${[spaRoute]}></vir-app-route-link>
+                        <${AppRouteLinkElement} .routes=${[spaRoute]}></${AppRouteLinkElement}>
                     </li>
                 `;
             })}
@@ -66,11 +68,9 @@ export class AppNavElement extends LitElement {
 
     render() {
         return html`
-            <nav>
-                <ul>
-                    ${this.renderNavElements()}
-                </ul>
-            </nav>
+            <ul>
+                ${this.renderNavElements()}
+            </ul>
         `;
     }
 }

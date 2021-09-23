@@ -3,9 +3,9 @@ import {customElement} from 'lit/decorators.js';
 import {VirElement} from '../../../render/vir-element';
 import {html} from '../../../render/vir-html';
 
-@customElement('vir-intro-example')
-export class IntroExampleElement extends VirElement {
-    public static readonly tagName = 'vir-intro-example';
+@customElement('vir-home')
+export class HomeElement extends VirElement {
+    public static readonly tagName = 'vir-home';
     static styles = css`
         :host {
             padding: 0 64px;
@@ -13,7 +13,7 @@ export class IntroExampleElement extends VirElement {
     `;
     protected render(): HTMLTemplateResult {
         return html`
-            Intro Example
+            Welcome!
         `;
     }
 }

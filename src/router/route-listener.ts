@@ -4,6 +4,7 @@ import {setRoutes} from './set-route';
 
 let sanitizationStackDepth = 0;
 const maxSanitizationStackDepth = 2;
+let listenerCount = 0;
 
 export function addRouteListener<ValidRoutes extends string[]>(
     fireOnCreation: boolean,
@@ -14,6 +15,11 @@ export function addRouteListener<ValidRoutes extends string[]>(
     sanitizeRoutes: (routes: Readonly<string[]>) => Readonly<ValidRoutes>,
     callback: (routes: Readonly<ValidRoutes>) => void,
 ) {
+    listenerCount++;
+    if (listenerCount > 1) {
+        throw new Error(`Too many listeners to the route, should only have one!`);
+    }
+
     const locationChangeCallback = () => {
         const currentRoutes = getRoutes();
         if (sanitizationStackDepth > maxSanitizationStackDepth) {
@@ -23,7 +29,6 @@ export function addRouteListener<ValidRoutes extends string[]>(
                 )}`,
             );
         }
-        (window as any).derp = setRoutes;
 
         const sanitizedRoutes = sanitizeRoutes(currentRoutes);
 
@@ -36,13 +41,13 @@ export function addRouteListener<ValidRoutes extends string[]>(
             return setRoutes(sanitizedRoutes, true);
         }
     };
-
-    if (fireOnCreation) {
-        locationChangeCallback();
-    }
     window.addEventListener(
         // this event is consolidated from static/spa.js
         'locationchange',
         locationChangeCallback,
     );
+
+    if (fireOnCreation) {
+        locationChangeCallback();
+    }
 }
