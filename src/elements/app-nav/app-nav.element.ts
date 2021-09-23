@@ -1,6 +1,7 @@
-import {css, html, HTMLTemplateResult, LitElement} from 'lit';
+import {css, HTMLTemplateResult, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {getEnumTypedValues, isEnumValue} from 'virmator/dist/augments/object';
+import {html} from '../../render/vir-html';
 import {addRouteListener} from '../../router/route-listener';
 import {SpaRoute} from '../../router/spa-routes';
 import './app-route-link.element';
@@ -8,7 +9,7 @@ import './app-route-link.element';
 export type ValidNavRoutes = [SpaRoute];
 
 export class NavRouteUpdate extends CustomEvent<[SpaRoute]> {
-    public static eventName = 'navrouteupdate';
+    public static eventName = 'nav-route-update';
     constructor(detail: Readonly<ValidNavRoutes>) {
         super(NavRouteUpdate.eventName, {detail: [...detail], bubbles: true, composed: true});
     }
@@ -40,6 +41,7 @@ export class AppNavElement extends LitElement {
 
     constructor() {
         super();
+        console.log('constructing');
         addRouteListener<ValidNavRoutes>(true, sanitizeSpaRoutes, (routes) => {
             const rootRoute = routes[0];
             if (rootRoute !== this.spaRoute) {

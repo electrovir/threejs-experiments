@@ -1,5 +1,6 @@
-import {css, html, LitElement} from 'lit';
+import {css, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import {html} from '../render/vir-html';
 import {SpaRoute} from '../router/spa-routes';
 import './app-nav/app-nav.element';
 import {NavRouteUpdate} from './app-nav/app-nav.element';
@@ -28,7 +29,7 @@ export class ThreeJsExperimentsAppElement extends LitElement {
             <main></main>
         `;
 
-        console.log(template);
+        console.dir(template);
 
         return template;
     }

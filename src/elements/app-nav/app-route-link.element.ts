@@ -1,5 +1,6 @@
-import {css, html, HTMLTemplateResult, LitElement} from 'lit';
+import {css, HTMLTemplateResult, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import {html} from '../../render/vir-html';
 import {createPathString, setRoutes} from '../../router/set-route';
 
 @customElement('vir-app-route-link')
@@ -29,14 +30,16 @@ export class AppRouteLinkElement extends LitElement {
             );
         }
         const label = lastRoute.length ? prettifyRouteName(lastRoute) : 'Home';
-        return html`
+        const template = html`
             <a
-                href="${createPathString(definedRoutes)}"
+                href=${createPathString(definedRoutes)}
                 @click=${(clickEvent: MouseEvent) => this.routesClicked(clickEvent, definedRoutes)}
             >
                 ${label}
             </a>
         `;
+
+        return template;
     }
 }
 

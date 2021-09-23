@@ -1,5 +1,6 @@
-import {css, html, HTMLTemplateResult, LitElement} from 'lit';
+import {css, HTMLTemplateResult, LitElement} from 'lit';
 import {customElement} from 'lit/decorators.js';
+import {html} from '../../../render/vir-html';
 
 @customElement('vir-intro-example')
 export class IntroExampleElement extends LitElement {
