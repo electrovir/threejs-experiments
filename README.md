@@ -1,3 +1,5 @@
 # threejs-experiments
 
-playing around with Three.js
+Playing around with [Three.js](https://threejs.org).
+
+See it live [here](https://electrovir.github.io/threejs-experiments/).
