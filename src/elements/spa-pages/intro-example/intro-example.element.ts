@@ -51,10 +51,10 @@ export class IntroExampleElement extends VirElement {
 
     private animateThreeJs() {
         if (!this.webGlRenderer) {
-            throw new Error(`Something really brokey cause there's no renderer for animating to!`);
+            throw new Error(`Something really broke cause there's no renderer for animating to!`);
         }
         if (!this.camera) {
-            throw new Error(`Something really brokey cause there's no camera for animating to!`);
+            throw new Error(`Something really broke cause there's no camera for animating to!`);
         }
         requestAnimationFrame(() => this.animateThreeJs());
         if (this.animationEnabled) {

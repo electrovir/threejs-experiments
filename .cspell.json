@@ -1,4 +1,5 @@
 {
+    "ignorePaths": ["build/"],
     "import": ".cspell-base.json",
     "words": ["locationchange", "pushstate", "threejs", "replacestate"]
 }

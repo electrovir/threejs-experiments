@@ -14,7 +14,7 @@
         "url": "https://github.com/electrovir"
     },
     "scripts": {
-        "build": "snowpack build",
+        "build": "rm -rf build && snowpack build && touch build/.nojekyll",
         "format": "virmator format write",
         "prepublishOnly": "npm run test:full",
         "spellcheck": "virmator spellcheck",
