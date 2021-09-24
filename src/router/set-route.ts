@@ -1,3 +1,4 @@
+import {containsRelativeBase, relativeBase} from './route-relative-base';
 export function setRoutes(
     routes: Readonly<string[]>,
     /**
@@ -6,7 +7,6 @@ export function setRoutes(
      */
     replace = false,
 ): void {
-    // throw new Error('updating route is not triggering the locationchange listener');
     const path = createPathString(routes);
     if (replace) {
         window.history.replaceState(undefined, '', path);
@@ -16,5 +16,6 @@ export function setRoutes(
 }
 
 export function createPathString(routes: Readonly<string[]>): string {
-    return `/${routes.join('/')}`;
+    const pathBase = containsRelativeBase() ? `/${relativeBase}` : '';
+    return `${pathBase}/${routes.join('/')}`;
 }
