@@ -1,3 +1,4 @@
+import {containsRelativeBase, relativeBase} from "./route-relative-base.js";
 export function setRoutes(routes, replace = false) {
   const path = createPathString(routes);
   if (replace) {
@@ -7,5 +8,6 @@ export function setRoutes(routes, replace = false) {
   }
 }
 export function createPathString(routes) {
-  return `/${routes.join("/")}`;
+  const pathBase = containsRelativeBase() ? `/${relativeBase}` : "";
+  return `${pathBase}/${routes.join("/")}`;
 }
