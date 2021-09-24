@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "lit": "./lit.js",
+    "lit/decorators.js": "./lit/decorators.js",
+    "lit/static-html.js": "./lit/static-html.js",
+    "three": "./three.js",
+    "virmator/dist/augments/object": "./virmator/dist/augments/object.js"
+  }
+}
