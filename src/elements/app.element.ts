@@ -1,14 +1,16 @@
-import {css, LitElement} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {html} from '../render/vir-html';
+import {defineFunctionalElement, html, listen} from 'element-vir';
+import {css} from 'lit';
 import {SpaRoute} from '../router/spa-routes';
-import {AppNavElement, NavRouteUpdate} from './app-nav/app-nav.element';
+import {AppNavElement} from './app-nav/app-nav.element';
 import {HomeElement} from './spa-pages/home/home.element';
 import {IntroExampleElement} from './spa-pages/intro-example/intro-example.element';
 
-@customElement('vir-three-js-experiments-app')
-export class ThreeJsExperimentsAppElement extends LitElement {
-    static styles = css`
+export const ThreeJsExperimentsAppElement = defineFunctionalElement({
+    tagName: 'vir-three-js-experiments-app',
+    props: {
+        spaRoute: undefined as SpaRoute | undefined,
+    },
+    styles: css`
         :host {
             display: flex;
             flex-direction: column;
@@ -26,32 +28,30 @@ export class ThreeJsExperimentsAppElement extends LitElement {
         main > * {
             flex-grow: 1;
         }
-    `;
 
-    private routeUpdated(newRoute: SpaRoute) {
-        this.spaRoute = newRoute;
-    }
-
-    @property() spaRoute: SpaRoute | undefined;
-
-    render() {
-        const template = html`
+        .github-banner {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+    `,
+    renderCallback: ({props}) => {
+        return html`
             <nav>
                 <${AppNavElement}
-                    @${NavRouteUpdate.eventName}=${(event: NavRouteUpdate) =>
-            this.routeUpdated(event.detail[0])}
+                    ${listen(AppNavElement.events.navUpdate, (event) => {
+                        props.spaRoute = event.detail[0];
+                    })}
                 ></${AppNavElement}>
+                <a class="github-banner" href="https://github.com/electrovir/threejs-experiments"><img loading="lazy" width="149" height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_white_ffffff.png?resize=149%2C149" class="attachment-full size-full" alt="Fork me on GitHub" data-recalc-dims="1"></a>
             </nav>
             <main>
-                ${this.spaRoute === SpaRoute.Home ? html`<${HomeElement}></${HomeElement}>` : ''}
+                ${props.spaRoute === SpaRoute.Home ? html`<${HomeElement}></${HomeElement}>` : ''}
                 ${
-                    this.spaRoute === SpaRoute.IntroExample
+                    props.spaRoute === SpaRoute.IntroExample
                         ? html`<${IntroExampleElement}></${IntroExampleElement}>`
                         : ''
                 }
-            </main>
-        `;
-
-        return template;
-    }
-}
+            </main>`;
+    },
+});

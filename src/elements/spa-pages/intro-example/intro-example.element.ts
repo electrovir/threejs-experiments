@@ -1,16 +1,15 @@
-import {css, TemplateResult} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import {defineFunctionalElement} from 'element-vir';
+import {css} from 'lit';
 import {html} from 'lit/static-html.js';
-import {BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene, WebGLRenderer} from 'three';
-import {VirElement} from '../../../render/vir-element';
+import {createThrottle} from '../../../throttle';
+import {CubeAnimation, elementToSize} from './cube-animation';
 
 // https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html
 // https://jsfiddle.net/Q4Jpu/
 
-@customElement('vir-intro-example')
-export class IntroExampleElement extends VirElement {
-    public static readonly tagName = 'vir-intro-example';
-    static styles = css`
+export const IntroExampleElement = defineFunctionalElement({
+    tagName: 'vir-intro-example',
+    styles: css`
         :host {
             display: flex;
             flex-direction: column;
@@ -33,136 +32,37 @@ export class IntroExampleElement extends VirElement {
             align-items: stretch;
             flex-grow: 1;
         }
-    `;
-
-    @property() animationEnabled = true;
-
-    private cube: Mesh<BoxGeometry, MeshBasicMaterial> = new Mesh(
-        new BoxGeometry(),
-        new MeshBasicMaterial({color: 0x00ff00}),
-    );
-
-    private canvas: HTMLCanvasElement | undefined;
-    private canvasAvailableSizeElement: HTMLDivElement | undefined;
-    private webGlRenderer: WebGLRenderer | undefined;
-    private threeJsScene = new Scene();
-    private camera: PerspectiveCamera | undefined;
-    private starterCameraDimensions: {tanFov: number; canvasHeight: number} | undefined;
-
-    private animateThreeJs() {
-        if (!this.webGlRenderer) {
-            throw new Error(`Something really broke cause there's no renderer for animating to!`);
-        }
-        if (!this.camera) {
-            throw new Error(`Something really broke cause there's no camera for animating to!`);
-        }
-        requestAnimationFrame(() => this.animateThreeJs());
-        if (this.animationEnabled) {
-            this.cube.rotation.x += 0.01;
-            this.cube.rotation.y += 0.01;
-
-            this.webGlRenderer.render(this.threeJsScene, this.camera);
-        }
-    }
-
-    private updateCanvasSize(): {w: number; h: number} {
-        if (!this.canvas) {
-            throw new Error(`Canvas to update size on was not found.`);
-        }
-        if (!this.canvasAvailableSizeElement) {
-            throw new Error(`Canvas wrapper for updating canvas size on was not found.`);
-        }
-        if (!this.webGlRenderer) {
-            throw new Error(`renderer not found.`);
+    `,
+    props: {
+        animationEnabled: true,
+        animation: undefined as undefined | CubeAnimation,
+        resizeListener: undefined as undefined | (() => void),
+    },
+    firstUpdated: ({element, props}) => {
+        /** This is passed into three.js for rendering. */
+        const canvas = element.renderRoot.querySelector('canvas');
+        if (!(canvas instanceof HTMLCanvasElement)) {
+            throw new Error(`Could not find canvas element in connected callback.`);
         }
 
-        const availableCanvasSize = this.canvasAvailableSizeElement.getBoundingClientRect();
-        const size = {w: availableCanvasSize.width, h: availableCanvasSize.height};
-        this.webGlRenderer.setSize(size.w, size.h);
+        /** This is used to determine the space available to the canvas */
+        const canvasWrapper = element.renderRoot.querySelector('.canvas-wrapper');
+        if (!canvasWrapper) {
+            throw new Error(`Could not find canvas wrapper element in connected callback.`);
+        }
 
-        if (this.camera) {
-            if (!this.starterCameraDimensions) {
-                throw new Error(
-                    `Camera was defined for updating canvas size but not the initial camera dimensions.`,
-                );
+        props.animation = new CubeAnimation(canvas);
+        props.resizeListener = createThrottle(() => {
+            if (props.animation) {
+                props.animation.updateSize(elementToSize(canvasWrapper));
             }
-            if (!this.threeJsScene) {
-                throw new Error(`Camera was defined for updating canvas size but not the scene.`);
-            }
-            this.camera.aspect = size.w / size.h;
-            this.camera.fov =
-                (360 / Math.PI) *
-                Math.atan(
-                    this.starterCameraDimensions.tanFov *
-                        (size.h / this.starterCameraDimensions.canvasHeight),
-                );
-
-            this.camera.updateProjectionMatrix();
+        }, 50);
+        window.addEventListener('resize', props.resizeListener);
+    },
+    renderCallback: ({props}) => {
+        if (props.animation) {
+            props.animation.animationEnabled = props.animationEnabled;
         }
-
-        return size;
-    }
-
-    private getCanvas(): HTMLCanvasElement {
-        const queriedCanvas = this.renderRoot?.querySelector('canvas');
-
-        if (!(queriedCanvas instanceof HTMLCanvasElement)) {
-            throw new Error(`Could not find canvas inside of ${IntroExampleElement.tagName}!`);
-        }
-
-        return queriedCanvas;
-    }
-
-    private getCanvasWrapper(): HTMLDivElement {
-        const queriedCanvasWrapper = this.renderRoot?.querySelector(`.canvas-wrapper`);
-
-        if (!(queriedCanvasWrapper instanceof HTMLDivElement)) {
-            throw new Error(
-                `Could not find canvas wrapper inside of ${IntroExampleElement.tagName}!`,
-            );
-        }
-
-        return queriedCanvasWrapper;
-    }
-
-    private timeout: number | undefined;
-
-    private throttleResizeUpdates() {
-        if (!this.timeout) {
-            this.updateCanvasSize();
-            this.timeout = window.setTimeout(() => {
-                this.updateCanvasSize();
-                this.timeout = undefined;
-            }, 200);
-        }
-    }
-
-    private setupThreeJs() {
-        this.canvas = this.getCanvas();
-        this.canvasAvailableSizeElement = this.getCanvasWrapper();
-
-        this.webGlRenderer = new WebGLRenderer({canvas: this.canvas});
-
-        const size = this.updateCanvasSize();
-
-        this.camera = new PerspectiveCamera(75, size.w / size.h, 0.1, 1000);
-        const tanFov = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
-        this.starterCameraDimensions = {tanFov, canvasHeight: size.h};
-
-        this.threeJsScene.add(this.cube);
-        this.camera.position.z = 3;
-
-        this.animateThreeJs();
-        window.addEventListener('resize', () => {
-            this.throttleResizeUpdates();
-        });
-    }
-
-    public firstUpdated() {
-        this.setupThreeJs();
-    }
-
-    protected render(): TemplateResult {
         return html`
             <h1>Intro Example</h1>
             <p>
@@ -170,15 +70,15 @@ export class IntroExampleElement extends VirElement {
                 <!-- ignore so there aren't spaces inside of the link -->
                 <!-- prettier-ignore -->
                 <a
-                href="https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"
-                >Creating a Scene</a>
+            href="https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"
+            >Creating a Scene</a>
 
                 (
                 <!-- prettier-ignore -->
                 <a
-                    href="https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html"
-                    >source code</a>
-                ) introduction with
+                href="https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html"
+                >source code</a>
+                ) introduction with window
                 <!-- prettier-ignore -->
                 <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
             </p>
@@ -186,5 +86,5 @@ export class IntroExampleElement extends VirElement {
                 <canvas></canvas>
             </div>
         `;
-    }
-}
+    },
+});

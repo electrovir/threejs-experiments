@@ -1,14 +1,9 @@
-import {css, HTMLTemplateResult} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import {assign, defineFunctionalElement, ElementEvent, eventInit, html} from 'element-vir';
+import {css} from 'lit';
 import {getEnumTypedValues, isEnumValue} from 'virmator/dist/augments/object';
-import {VirElement} from '../../render/vir-element';
-import {html} from '../../render/vir-html';
-import {addRouteListener} from '../../router/route-listener';
+import {addRouteListener, removeRouteListener} from '../../router/route-listener';
 import {SpaRoute} from '../../router/spa-routes';
-import './app-route-link.element';
 import {AppRouteLinkElement} from './app-route-link.element';
-
-export type ValidNavRoutes = [SpaRoute];
 
 export class NavRouteUpdate extends CustomEvent<[SpaRoute]> {
     public static eventName = 'nav-route-update';
@@ -17,10 +12,26 @@ export class NavRouteUpdate extends CustomEvent<[SpaRoute]> {
     }
 }
 
-@customElement('vir-app-nav')
-export class AppNavElement extends VirElement {
-    public static readonly tagName = 'vir-app-nav';
-    public static styles = css`
+export type ValidNavRoutes = Readonly<[SpaRoute]>;
+
+const defaultRoute: ValidNavRoutes = [SpaRoute.Home];
+
+function sanitizeSpaRoutes(routes: Readonly<string[]>): Readonly<ValidNavRoutes> {
+    if (routes.length !== 1) {
+        return defaultRoute;
+    }
+    const firstRoute = routes[0];
+
+    if (isEnumValue(firstRoute, SpaRoute)) {
+        return [firstRoute];
+    } else {
+        return defaultRoute;
+    }
+}
+
+export const AppNavElement = defineFunctionalElement({
+    tagName: 'vir-app-nav',
+    styles: css`
         :host {
             display: block;
         }
@@ -39,53 +50,45 @@ export class AppNavElement extends VirElement {
             border: 1px solid grey;
             border-width: 0 1px;
         }
-    `;
-    @property() private spaRoute: SpaRoute | undefined;
-
-    public connectedCallback() {
-        super.connectedCallback();
-        addRouteListener<ValidNavRoutes>(true, sanitizeSpaRoutes, (routes) => {
-            const rootRoute = routes[0];
-            if (rootRoute !== this.spaRoute) {
-                this.spaRoute = rootRoute;
-                const event = new NavRouteUpdate(routes);
-                this.dispatchEvent(event);
-            }
-        });
-    }
-
-    private renderNavElements(): HTMLTemplateResult {
-        return html`
-            ${getEnumTypedValues(SpaRoute).map((spaRoute) => {
-                return html`
-                    <li>
-                        <${AppRouteLinkElement} .routes=${[spaRoute]}></${AppRouteLinkElement}>
-                    </li>
-                `;
-            })}
-        `;
-    }
-
-    render() {
+    `,
+    props: {
+        spaRoute: undefined as SpaRoute | undefined,
+        routeListener: undefined as undefined | (() => void),
+    },
+    events: {
+        navUpdate: eventInit<ValidNavRoutes>(),
+    },
+    connectedCallback: ({props, dispatchEvent, events}) => {
+        props.routeListener = addRouteListener<ValidNavRoutes>(
+            true,
+            sanitizeSpaRoutes,
+            (routes) => {
+                const rootRoute = routes[0];
+                if (rootRoute !== props.spaRoute) {
+                    props.spaRoute = rootRoute;
+                    dispatchEvent(new ElementEvent(events.navUpdate, routes));
+                }
+            },
+        );
+    },
+    disconnectedCallback: ({props}) => {
+        if (props.routeListener) {
+            removeRouteListener(props.routeListener);
+        }
+    },
+    renderCallback: () => {
         return html`
             <ul>
-                ${this.renderNavElements()}
+                ${getEnumTypedValues(SpaRoute).map((spaRoute) => {
+                    return html`
+                    <li>
+                        <${AppRouteLinkElement} ${assign(AppRouteLinkElement.props.routes, [
+                        spaRoute,
+                    ])}></${AppRouteLinkElement}>
+                    </li>
+                `;
+                })}
             </ul>
         `;
-    }
-}
-
-const defaultRoute: ValidNavRoutes = [SpaRoute.Home];
-
-function sanitizeSpaRoutes(routes: Readonly<string[]>): Readonly<ValidNavRoutes> {
-    if (routes.length !== 1) {
-        return defaultRoute;
-    }
-    const firstRoute = routes[0];
-
-    if (isEnumValue(firstRoute, SpaRoute)) {
-        return [firstRoute];
-    } else {
-        return defaultRoute;
-    }
-}
+    },
+});

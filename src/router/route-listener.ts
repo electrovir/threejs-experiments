@@ -6,15 +6,19 @@ let sanitizationStackDepth = 0;
 const maxSanitizationStackDepth = 2;
 let listenerCount = 0;
 
-export function addRouteListener<ValidRoutes extends string[]>(
+export type RouteCallback<ValidRoutes extends string[] | Readonly<string[]>> = (
+    routes: Readonly<ValidRoutes>,
+) => void;
+
+export function addRouteListener<ValidRoutes extends string[] | Readonly<string[]>>(
     fireOnCreation: boolean,
     /**
      * Returns sanitized routes. If they differ from the current routes, the current routes are
      * replaced with the sanitized routes output of this callback.
      */
     sanitizeRoutes: (routes: Readonly<string[]>) => Readonly<ValidRoutes>,
-    callback: (routes: Readonly<ValidRoutes>) => void,
-) {
+    callback: RouteCallback<ValidRoutes>,
+): () => void {
     listenerCount++;
     if (listenerCount > 1) {
         throw new Error(`Too many listeners to the route, should only have one!`);
@@ -50,4 +54,9 @@ export function addRouteListener<ValidRoutes extends string[]>(
     if (fireOnCreation) {
         locationChangeCallback();
     }
+    return locationChangeCallback;
+}
+
+export function removeRouteListener(listener: () => void) {
+    window.removeEventListener('locationchange', listener);
 }
