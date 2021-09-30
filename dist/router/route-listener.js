@@ -27,4 +27,8 @@ export function addRouteListener(fireOnCreation, sanitizeRoutes, callback) {
   if (fireOnCreation) {
     locationChangeCallback();
   }
+  return locationChangeCallback;
+}
+export function removeRouteListener(listener) {
+  window.removeEventListener("locationchange", listener);
 }

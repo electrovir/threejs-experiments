@@ -1,41 +1,15 @@
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __decorate = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc(target, key) : target;
-  for (var i = decorators.length - 1, decorator; i >= 0; i--)
-    if (decorator = decorators[i])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result)
-    __defProp(target, key, result);
-  return result;
-};
-import {css, LitElement} from "../../_snowpack/pkg/lit.js";
-import {customElement, property} from "../../_snowpack/pkg/lit/decorators.js";
-import {html} from "../render/vir-html.js";
+import {defineFunctionalElement, html, listen} from "../../_snowpack/pkg/element-vir.js";
+import {css} from "../../_snowpack/pkg/lit.js";
 import {SpaRoute} from "../router/spa-routes.js";
-import {AppNavElement, NavRouteUpdate} from "./app-nav/app-nav.element.js";
+import {AppNavElement} from "./app-nav/app-nav.element.js";
 import {HomeElement} from "./spa-pages/home/home.element.js";
 import {IntroExampleElement} from "./spa-pages/intro-example/intro-example.element.js";
-export let ThreeJsExperimentsAppElement = class extends LitElement {
-  routeUpdated(newRoute) {
-    this.spaRoute = newRoute;
-  }
-  render() {
-    const template = html`
-            <nav>
-                <${AppNavElement}
-                    @${NavRouteUpdate.eventName}=${(event) => this.routeUpdated(event.detail[0])}
-                ></${AppNavElement}>
-            </nav>
-            <main>
-                ${this.spaRoute === SpaRoute.Home ? html`<${HomeElement}></${HomeElement}>` : ""}
-                ${this.spaRoute === SpaRoute.IntroExample ? html`<${IntroExampleElement}></${IntroExampleElement}>` : ""}
-            </main>
-        `;
-    return template;
-  }
-};
-ThreeJsExperimentsAppElement.styles = css`
+export const ThreeJsExperimentsAppElement = defineFunctionalElement({
+  tagName: "vir-three-js-experiments-app",
+  props: {
+    spaRoute: void 0
+  },
+  styles: css`
         :host {
             display: flex;
             flex-direction: column;
@@ -53,10 +27,26 @@ ThreeJsExperimentsAppElement.styles = css`
         main > * {
             flex-grow: 1;
         }
-    `;
-__decorate([
-  property()
-], ThreeJsExperimentsAppElement.prototype, "spaRoute", 2);
-ThreeJsExperimentsAppElement = __decorate([
-  customElement("vir-three-js-experiments-app")
-], ThreeJsExperimentsAppElement);
+
+        .github-banner {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+    `,
+  renderCallback: ({props}) => {
+    return html`
+            <nav>
+                <${AppNavElement}
+                    ${listen(AppNavElement.events.navUpdate, (event) => {
+      props.spaRoute = event.detail[0];
+    })}
+                ></${AppNavElement}>
+                <a class="github-banner" href="https://github.com/electrovir/threejs-experiments"><img loading="lazy" width="149" height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_white_ffffff.png?resize=149%2C149" class="attachment-full size-full" alt="Fork me on GitHub" data-recalc-dims="1"></a>
+            </nav>
+            <main>
+                ${props.spaRoute === SpaRoute.Home ? html`<${HomeElement}></${HomeElement}>` : ""}
+                ${props.spaRoute === SpaRoute.IntroExample ? html`<${IntroExampleElement}></${IntroExampleElement}>` : ""}
+            </main>`;
+  }
+});

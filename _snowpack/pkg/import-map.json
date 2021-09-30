@@ -1,7 +1,7 @@
 {
   "imports": {
+    "element-vir": "./element-vir.js",
     "lit": "./lit.js",
-    "lit/decorators.js": "./lit/decorators.js",
     "lit/static-html.js": "./lit/static-html.js",
     "three": "./three.js",
     "virmator/dist/augments/object": "./virmator/dist/augments/object.js"
