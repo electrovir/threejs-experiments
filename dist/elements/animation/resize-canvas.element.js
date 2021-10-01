@@ -4,9 +4,9 @@ import {
   eventInit,
   onDomCreated,
   onResize
-} from "../../_snowpack/pkg/element-vir.js";
-import {css} from "../../_snowpack/pkg/lit.js";
-import {html} from "../../_snowpack/pkg/lit/static-html.js";
+} from "../../../_snowpack/pkg/element-vir.js";
+import {css} from "../../../_snowpack/pkg/lit.js";
+import {html} from "../../../_snowpack/pkg/lit/static-html.js";
 export const ResizeCanvasElement = defineFunctionalElement({
   tagName: "vir-resize-canvas",
   styles: css`
