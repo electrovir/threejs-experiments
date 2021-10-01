@@ -1,4 +1,4 @@
-import { n, r } from './common/lit-element-71006d11.js';
+import { n, r } from './common/lit-element-989d7d0e.js';
 import { T, y } from './common/lit-html-7e28c940.js';
 
 /**
@@ -125,29 +125,6 @@ function defineFunctionalElement(functionalElementInit) {
             render() {
                 return functionalElementInit.renderCallback(this.createRenderParams());
             }
-            connectedCallback() {
-                var _a;
-                super.connectedCallback();
-                (_a = functionalElementInit.connectedCallback) === null || _a === void 0 ? void 0 : _a.call(functionalElementInit, {
-                    element: this,
-                    ...this.createRenderParams(),
-                });
-            }
-            disconnectedCallback() {
-                var _a;
-                super.disconnectedCallback();
-                (_a = functionalElementInit.disconnectedCallback) === null || _a === void 0 ? void 0 : _a.call(functionalElementInit, {
-                    element: this,
-                    ...this.createRenderParams(),
-                });
-            }
-            firstUpdated() {
-                var _a;
-                (_a = functionalElementInit.firstUpdated) === null || _a === void 0 ? void 0 : _a.call(functionalElementInit, {
-                    element: this,
-                    ...this.createRenderParams(),
-                });
-            }
         },
         _a.tagName = functionalElementInit.tagName,
         _a.styles = functionalElementInit.styles || r ``,
@@ -167,16 +144,43 @@ function defineFunctionalElement(functionalElementInit) {
  */
 const t={ATTRIBUTE:1,CHILD:2,PROPERTY:3,BOOLEAN_ATTRIBUTE:4,EVENT:5,ELEMENT:6},e$1=t=>(...e)=>({_$litDirective$:t,values:e});class i$1{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i;}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}}
 
-function extractFunctionalElement(partInfo) {
-    if (partInfo.type !== t.ELEMENT) {
-        throw new Error(`assign directive can only be attached directly to an element.`);
-    }
+function extractFunctionalElement(partInfo, directiveName) {
+    assertsIsElementPartInfo(partInfo, directiveName);
     const element = partInfo.element;
     if (!(element instanceof FunctionalElementBaseClass)) {
-        throw new Error(`assign directive only works when attached to functional elements`);
+        throw new Error(`${directiveName} directive only works when attached to functional elements`);
     }
     return element;
 }
+function assertsIsElementPartInfo(partInfo, directiveName) {
+    if (partInfo.type !== t.ELEMENT) {
+        throw new Error(`${directiveName} directive can only be attached directly to an element.`);
+    }
+    if (!partInfo.element) {
+        throw new Error(`${directiveName} directive found no element`);
+    }
+}
+
+/**
+ * The directive generics (in listenDirective) are not strong enough to maintain their values. Thus,
+ * the directive call is wrapped in this function.
+ */
+function assign(propertyDescriptor, value) {
+    return assignDirective(propertyDescriptor.propName, value);
+}
+const assignDirective = e$1(class extends i$1 {
+    constructor(partInfo) {
+        super(partInfo);
+        this.element = extractFunctionalElement(partInfo, 'assign');
+    }
+    render(propName, value) {
+        if (!(propName in this.element.instanceProps)) {
+            throw new Error(`${this.element.tagName} element has no property of name "${propName}"`);
+        }
+        this.element.instanceProps[propName] = value;
+        return T;
+    }
+});
 
 /**
  * The directive generics (in listenDirective) are not strong enough to maintain their values. Thus,
@@ -188,7 +192,7 @@ function listen(eventType, listener) {
 const listenDirective = e$1(class extends i$1 {
     constructor(partInfo) {
         super(partInfo);
-        this.element = extractFunctionalElement(partInfo);
+        this.element = extractFunctionalElement(partInfo, 'listen');
     }
     resetListener(listenerMetaData) {
         if (this.lastListenerMetaData) {
@@ -223,24 +227,59 @@ const listenDirective = e$1(class extends i$1 {
     }
 });
 
-/**
- * The directive generics (in listenDirective) are not strong enough to maintain their values. Thus,
- * the directive call is wrapped in this function.
- */
-function assign(propertyDescriptor, value) {
-    return assignDirective(propertyDescriptor.propName, value);
-}
-const assignDirective = e$1(class extends i$1 {
+const directiveName = 'onDomCreated';
+/** Only fires once, when the element has been created. */
+const onDomCreated = e$1(class extends i$1 {
     constructor(partInfo) {
         super(partInfo);
-        this.element = extractFunctionalElement(partInfo);
+        assertsIsElementPartInfo(partInfo, directiveName);
     }
-    render(propName, value) {
-        if (!(propName in this.element.instanceProps)) {
-            throw new Error(`${this.element.tagName} element has no property of name "${propName}"`);
+    update(partInfo, [callback]) {
+        assertsIsElementPartInfo(partInfo, directiveName);
+        const newElement = partInfo.element;
+        if (newElement !== this.element) {
+            callback(newElement);
+            this.element = newElement;
         }
-        this.element.instanceProps[propName] = value;
-        return T;
+        return this.render(callback);
+    }
+    render(callback) {
+        return undefined;
+    }
+});
+
+const directiveName$1 = 'onResize';
+const onResize = e$1(class extends i$1 {
+    constructor(partInfo) {
+        super(partInfo);
+        this.resizeObserver = new ResizeObserver((entries) => this.fireCallback(entries));
+        assertsIsElementPartInfo(partInfo, directiveName$1);
+    }
+    fireCallback(entries) {
+        var _a;
+        const resizeEntry = entries[0];
+        if (!resizeEntry) {
+            console.error(entries);
+            throw new Error(`${directiveName$1} observation triggered but the first entry was empty.`);
+        }
+        (_a = this.callback) === null || _a === void 0 ? void 0 : _a.call(this, { target: resizeEntry.target, contentRect: resizeEntry.contentRect });
+    }
+    update(partInfo, [callback]) {
+        assertsIsElementPartInfo(partInfo, directiveName$1);
+        this.callback = callback;
+        const newElement = partInfo.element;
+        // if the element changes we need to observe the new one
+        if (newElement !== this.element) {
+            if (this.element) {
+                this.resizeObserver.unobserve(this.element);
+            }
+            this.resizeObserver.observe(newElement);
+            this.element = newElement;
+        }
+        return this.render(callback);
+    }
+    render(callback) {
+        return undefined;
     }
 });
 
@@ -357,4 +396,4 @@ function html(inputTemplateStrings, ...inputValues) {
     return htmlTemplate;
 }
 
-export { ElementEvent, assign, defineFunctionalElement, eventInit, html, listen };
+export { ElementEvent, assign, defineFunctionalElement, eventInit, html, listen, onDomCreated, onResize };

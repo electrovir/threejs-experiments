@@ -1,60 +1,35 @@
-import {defineFunctionalElement} from "../../../../_snowpack/pkg/element-vir.js";
-import {css} from "../../../../_snowpack/pkg/lit.js";
-import {html} from "../../../../_snowpack/pkg/lit/static-html.js";
+import {defineFunctionalElement, html, listen} from "../../../../_snowpack/pkg/element-vir.js";
+import {css, unsafeCSS} from "../../../../_snowpack/pkg/lit.js";
 import {createThrottle} from "../../../throttle.js";
-import {CubeAnimation, elementToSize} from "./cube-animation.js";
+import {ResizeCanvasElement} from "../../resize-canvas.element.js";
+import {CubeAnimation} from "./cube-animation.js";
 export const IntroExampleElement = defineFunctionalElement({
   tagName: "vir-intro-example",
   styles: css`
         :host {
             display: flex;
             flex-direction: column;
-            align-items: stretch;
         }
 
-        canvas {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-
-        :host > *:not(.canvas-wrapper) {
+        :host > *:not(${unsafeCSS(ResizeCanvasElement.tagName)}) {
             padding: 0 32px;
         }
 
-        .canvas-wrapper {
-            position: relative;
-            display: flex;
-            align-items: stretch;
+        ${unsafeCSS(ResizeCanvasElement.tagName)} {
+            /*
+                this padding is used to manually verify that the canvas size is not overflowing
+            */
+            padding: 8px;
             flex-grow: 1;
         }
     `,
   props: {
     animationEnabled: true,
     animation: void 0,
-    resizeListener: void 0
-  },
-  firstUpdated: ({element, props}) => {
-    const canvas = element.renderRoot.querySelector("canvas");
-    if (!(canvas instanceof HTMLCanvasElement)) {
-      throw new Error(`Could not find canvas element in connected callback.`);
-    }
-    const canvasWrapper = element.renderRoot.querySelector(".canvas-wrapper");
-    if (!canvasWrapper) {
-      throw new Error(`Could not find canvas wrapper element in connected callback.`);
-    }
-    props.animation = new CubeAnimation(canvas);
-    props.resizeListener = createThrottle(() => {
-      if (props.animation) {
-        props.animation.updateSize(elementToSize(canvasWrapper));
-      }
-    }, 50);
-    window.addEventListener("resize", props.resizeListener);
+    resizeListener: void 0,
+    thing: 5
   },
   renderCallback: ({props}) => {
-    if (props.animation) {
-      props.animation.animationEnabled = props.animationEnabled;
-    }
     return html`
             <h1>Intro Example</h1>
             <p>
@@ -62,9 +37,8 @@ export const IntroExampleElement = defineFunctionalElement({
                 <!-- ignore so there aren't spaces inside of the link -->
                 <!-- prettier-ignore -->
                 <a
-            href="https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"
-            >Creating a Scene</a>
-
+                    href="https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"
+                    >Creating a Scene</a>
                 (
                 <!-- prettier-ignore -->
                 <a
@@ -74,9 +48,19 @@ export const IntroExampleElement = defineFunctionalElement({
                 <!-- prettier-ignore -->
                 <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
             </p>
-            <div class="canvas-wrapper">
-                <canvas></canvas>
-            </div>
+            <${ResizeCanvasElement}
+                    ${listen(ResizeCanvasElement.events.canvasInit, (event) => {
+      props.animation = new CubeAnimation(event.detail, props.animationEnabled, void 0);
+      props.resizeListener = createThrottle((size) => {
+        if (props.animation) {
+          props.animation.updateSize(size);
+        }
+      });
+    })}
+                    ${listen(ResizeCanvasElement.events.canvasResize, (event) => {
+      props.resizeListener?.(event.detail);
+    })}
+            ></${ResizeCanvasElement}>
         `;
   }
 });

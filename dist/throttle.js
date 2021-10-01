@@ -2,14 +2,16 @@ export function createThrottle(callback, throttleTime = 100) {
   let firstTriggered = false;
   let timeout = void 0;
   let clearFirstTriggeredTimeout = void 0;
-  return () => {
+  let latestArgs = [];
+  return (...args) => {
+    latestArgs = args;
     if (!timeout) {
       if (!firstTriggered) {
-        callback();
+        callback(...latestArgs);
         firstTriggered = true;
       }
       timeout = window.setTimeout(() => {
-        callback();
+        callback(...latestArgs);
         timeout = void 0;
         if (clearFirstTriggeredTimeout) {
           window.clearTimeout(clearFirstTriggeredTimeout);
