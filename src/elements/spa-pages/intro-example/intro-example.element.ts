@@ -1,9 +1,6 @@
-import {defineFunctionalElement, html, listen} from 'element-vir';
+import {assign, defineFunctionalElement, html, listen} from 'element-vir';
 import {css, unsafeCSS} from 'lit';
-import {FpsEvent} from '../../../shared-interfaces/animation';
-import {Size} from '../../../shared-interfaces/size';
-import {createThrottle} from '../../../throttle';
-import {ResizeCanvasElement} from '../../animation/resize-canvas.element';
+import {AnimationElement} from '../../animation/animation.element';
 import {SingleColorCubeAnimation} from './single-color-cube-animation';
 
 // https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html
@@ -17,11 +14,11 @@ export const IntroExampleElement = defineFunctionalElement({
             flex-direction: column;
         }
 
-        :host > *:not(${unsafeCSS(ResizeCanvasElement.tagName)}) {
+        :host > * {
             padding: 0 32px;
         }
 
-        ${unsafeCSS(ResizeCanvasElement.tagName)} {
+        :host > ${unsafeCSS(AnimationElement.tagName)} {
             /*
                 this padding is used to manually verify that the canvas size is not overflowing
             */
@@ -30,53 +27,39 @@ export const IntroExampleElement = defineFunctionalElement({
         }
     `,
     props: {
+        animation: new SingleColorCubeAnimation(0x00ff00),
         animationEnabled: true,
-        animation: undefined as undefined | SingleColorCubeAnimation,
-        resizeListener: undefined as undefined | ((size: Size) => void),
-        thing: 5,
         currentFps: 0,
     },
     renderCallback: ({props}) => {
         return html`
-            <h1>Intro Example</h1>
-            <p>
-                From the
-                <!-- ignore so there aren't spaces inside of the link -->
-                <!-- prettier-ignore -->
-                <a
-                    href="https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"
-                    >Creating a Scene</a>
-                (
-                <!-- prettier-ignore -->
-                <a
-                href="https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html"
-                >source code</a>
-                ) introduction with window
-                <!-- prettier-ignore -->
-                <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
-                <br>
-                FPS: ${props.currentFps.toFixed(1)}
-            </p>
-            <${ResizeCanvasElement}
-                    ${listen(ResizeCanvasElement.events.canvasInit, (event) => {
-                        props.animation = new SingleColorCubeAnimation(
-                            event.detail,
-                            props.animationEnabled,
-                            undefined,
-                        );
-                        props.resizeListener = createThrottle((size: Size) => {
-                            if (props.animation) {
-                                props.animation.updateSize(size);
-                            }
-                        });
-                        props.animation.addEventListener(FpsEvent.eventName, (event) => {
-                            props.currentFps = event.detail;
-                        });
-                    })}
-                    ${listen(ResizeCanvasElement.events.canvasResize, (event) => {
-                        props.resizeListener?.(event.detail);
-                    })}
-            ></${ResizeCanvasElement}>
+        <h1>Intro Example</h1>
+        <p>
+            From the
+            <!-- ignore so there aren't spaces inside of the link -->
+            <!-- prettier-ignore -->
+            <a
+                href="https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"
+                >Creating a Scene</a>
+            (
+            <!-- prettier-ignore -->
+            <a
+            href="https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html"
+            >source code</a>
+            ) introduction with window
+            <!-- prettier-ignore -->
+            <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
+            <br>
+            FPS: ${props.currentFps.toFixed(1)}
+        </p>
+        <${AnimationElement}
+            ${assign(AnimationElement.props.animation, props.animation)}
+            ${assign(AnimationElement.props.animationEnabled, props.animationEnabled)}
+            ${listen(AnimationElement.events.fpsUpdate, (event) => {
+                props.currentFps = event.detail;
+            })}
+        >
+        </${AnimationElement}>
         `;
     },
 });

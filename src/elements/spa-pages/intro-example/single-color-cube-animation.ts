@@ -1,13 +1,10 @@
-import {BoxGeometry, Mesh, MeshBasicMaterial} from 'three';
+import {BoxGeometry, Camera, Mesh, MeshBasicMaterial, Scene, WebGLRenderer} from 'three';
 import {Animation} from '../../../shared-interfaces/animation';
 
+// https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html
 export class SingleColorCubeAnimation extends Animation {
-    constructor(
-        canvas: HTMLCanvasElement,
-        protected animationEnabled = true,
-        private readonly cubeColor = 0x00ff00,
-    ) {
-        super(canvas, animationEnabled);
+    constructor(private readonly cubeColor = 0x00ff00) {
+        super();
     }
 
     private cube: Mesh<BoxGeometry, MeshBasicMaterial> = new Mesh(
@@ -16,20 +13,23 @@ export class SingleColorCubeAnimation extends Animation {
     );
 
     protected initScene() {
-        this.threeJsScene.add(this.cube);
+        const scene = new Scene();
+        scene.add(this.cube);
+        return scene;
     }
 
-    protected animate(frameTime: number): boolean {
-        if (!this.camera) {
-            throw new Error(`Animation started but camera was not found.`);
-        }
-
+    protected animate(
+        frameTime: number,
+        webGlRenderer: WebGLRenderer,
+        camera: Camera,
+        scene: Scene,
+    ): boolean {
         const diff = ((0.01 * 60) / 1000) * frameTime;
 
         this.cube.rotation.x += diff;
         this.cube.rotation.y += diff;
 
-        this.webGlRenderer.render(this.threeJsScene, this.camera);
+        webGlRenderer.render(scene, camera);
         return true;
     }
 }

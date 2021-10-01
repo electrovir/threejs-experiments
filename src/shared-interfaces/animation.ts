@@ -1,5 +1,7 @@
-import {PerspectiveCamera, Scene, WebGLRenderer} from 'three';
+import {Camera, PerspectiveCamera, Scene, WebGLRenderer} from 'three';
 import {Size} from './size';
+
+// resize help from https://jsfiddle.net/Q4Jpu/
 
 export class FpsEvent extends CustomEvent<number> {
     static readonly eventName = 'fpsCount';
@@ -9,14 +11,76 @@ export class FpsEvent extends CustomEvent<number> {
     }
 }
 
-export abstract class Animation extends EventTarget {
-    constructor(
+export class Animation extends EventTarget {
+    // ==============================================
+    //                override these
+    // ==============================================
+    /** Method that is called each frame to run the animation. */
+    protected animate(
+        frameTime: number,
+        webGlRenderer: WebGLRenderer,
+        camera: Camera,
+        scene: Scene,
+    ): boolean {
+        return false;
+    }
+    /** Method that is called once to initialize the ThreeJS scene. */
+    protected initScene(): Scene {
+        return new Scene();
+    }
+    // ==============================================
+
+    private camera: PerspectiveCamera | undefined;
+    private canvas: HTMLCanvasElement | undefined;
+    private scene: Scene | undefined;
+    private webGlRenderer: WebGLRenderer | undefined;
+
+    protected starterCameraDimensions: {tanFov: number; canvasHeight: number} | undefined;
+
+    private lastRenderTime = 0;
+    private lastFpsEmitTime = 0;
+    private frameCountSinceLastFps = 0;
+
+    private animationEnabled = false;
+    private fpsEmitDelay = 500;
+
+    public destroy() {
+        this.animationEnabled = false;
+        this.webGlRenderer = undefined;
+        this.camera = undefined;
+        this.scene = undefined;
+        this.canvas = undefined;
+        this.starterCameraDimensions = undefined;
+        this.lastRenderTime = 0;
+        this.lastFpsEmitTime = 0;
+        this.animate = () => false;
+    }
+
+    public init(
         canvas: HTMLCanvasElement,
-        protected animationEnabled = true,
-        private readonly fpsEmitDelay = 500,
+        startAnimating: boolean,
+        fpsEmitDelay = 500,
+        size?: Size,
     ) {
-        super();
+        this.canvas = canvas;
+        this.animationEnabled = startAnimating;
+        this.fpsEmitDelay = fpsEmitDelay || 500;
         this.webGlRenderer = new WebGLRenderer({canvas});
+        if (size) {
+            this.updateSize(size);
+        }
+    }
+
+    private isInitialized() {
+        return !!(
+            this.canvas &&
+            this.camera &&
+            this.scene &&
+            this.animationEnabled &&
+            this.fpsEmitDelay &&
+            this.webGlRenderer &&
+            this.starterCameraDimensions
+        );
     }
 
     public addEventListener<EventType extends string>(
@@ -25,28 +89,18 @@ export abstract class Animation extends EventTarget {
             ? (event: FpsEvent) => void
             : EventListenerOrEventListenerObject,
         options?: AddEventListenerOptions | boolean,
-    ): void {
+    ): typeof callback {
         super.addEventListener(type, callback, options);
+
+        return callback;
     }
 
-    public setAnimationEnabled(value: boolean) {
+    public enableAnimation(value: boolean) {
         if (value && !this.animationEnabled) {
             this.resumeAnimation();
         }
         this.animationEnabled = value;
     }
-
-    protected webGlRenderer: WebGLRenderer;
-    protected threeJsScene = new Scene();
-    protected camera: PerspectiveCamera | undefined;
-    protected starterCameraDimensions: {tanFov: number; canvasHeight: number} | undefined;
-
-    protected abstract animate(frameTime: number): boolean;
-    protected abstract initScene(): void;
-    private lastRenderTime = 0;
-
-    private lastFpsEmitTime = 0;
-    private frameCountSinceLastFps = 0;
     private emitFps(newTime: number) {
         const diffTime = newTime - this.lastFpsEmitTime;
         if (diffTime > this.fpsEmitDelay) {
@@ -70,12 +124,21 @@ export abstract class Animation extends EventTarget {
 
     private animateWrapper(newTime: number) {
         if (this.animationEnabled) {
-            const previousLastRenderTime = this.lastRenderTime;
-            this.emitFps(newTime);
-            // update this before running animate so that animate doesn't mess up our FPS if it's really long
-            this.lastRenderTime = newTime;
-            const shouldKeepRendering = this.animate(newTime - previousLastRenderTime);
-            if (shouldKeepRendering) {
+            if (this.isInitialized()) {
+                const previousLastRenderTime = this.lastRenderTime;
+                this.emitFps(newTime);
+                // update this before running animate so that animate doesn't mess up our FPS if it's really long
+                this.lastRenderTime = newTime;
+                const shouldKeepRendering = this.animate(
+                    newTime - previousLastRenderTime,
+                    this.webGlRenderer!,
+                    this.camera!,
+                    this.scene!,
+                );
+                if (shouldKeepRendering) {
+                    requestAnimationFrame((newTime) => this.animateWrapper(newTime));
+                }
+            } else {
                 requestAnimationFrame((newTime) => this.animateWrapper(newTime));
             }
         }
@@ -86,7 +149,7 @@ export abstract class Animation extends EventTarget {
         const tanFov = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
         this.starterCameraDimensions = {tanFov, canvasHeight: initSize.h};
 
-        this.initScene();
+        this.scene = this.initScene();
         this.camera.position.z = 3;
         this.resumeAnimation();
     }
@@ -98,17 +161,18 @@ export abstract class Animation extends EventTarget {
             this.initSizes(newSize);
         }
 
-        if (!this.webGlRenderer) {
-            throw new Error(`renderer not found.`);
+        if (!(this.canvas && this.webGlRenderer && this.camera)) {
+            return;
         }
-        this.webGlRenderer.setSize(newSize.w, newSize.h);
+
+        this.webGlRenderer?.setSize(newSize.w, newSize.h);
         if (this.camera) {
             if (!this.starterCameraDimensions) {
                 throw new Error(
                     `Camera was defined for updating canvas size but not the initial camera dimensions.`,
                 );
             }
-            if (!this.threeJsScene) {
+            if (!this.scene) {
                 throw new Error(`Camera was defined for updating canvas size but not the scene.`);
             }
             this.camera.aspect = newSize.w / newSize.h;
