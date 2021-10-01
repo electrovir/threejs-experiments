@@ -7,7 +7,7 @@ import {
 } from 'element-vir';
 import {css} from 'lit';
 import {html} from 'lit/static-html.js';
-import {Size} from '../shared-interfaces/size';
+import {Size} from '../../shared-interfaces/size';
 
 export const ResizeCanvasElement = defineFunctionalElement({
     tagName: 'vir-resize-canvas',

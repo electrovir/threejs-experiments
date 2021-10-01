@@ -1,14 +1,37 @@
 import {PerspectiveCamera, Scene, WebGLRenderer} from 'three';
 import {Size} from './size';
 
-export abstract class Animation {
-    constructor(canvas: HTMLCanvasElement, protected animationEnabled = true) {
+export class FpsEvent extends CustomEvent<number> {
+    static readonly eventName = 'fpsCount';
+
+    constructor(fps: number) {
+        super(FpsEvent.eventName, {detail: fps, bubbles: true, composed: true});
+    }
+}
+
+export abstract class Animation extends EventTarget {
+    constructor(
+        canvas: HTMLCanvasElement,
+        protected animationEnabled = true,
+        private readonly fpsEmitDelay = 500,
+    ) {
+        super();
         this.webGlRenderer = new WebGLRenderer({canvas});
+    }
+
+    public addEventListener<EventType extends string>(
+        type: EventType,
+        callback: EventType extends typeof FpsEvent.eventName
+            ? (event: FpsEvent) => void
+            : EventListenerOrEventListenerObject,
+        options?: AddEventListenerOptions | boolean,
+    ): void {
+        super.addEventListener(type, callback, options);
     }
 
     public setAnimationEnabled(value: boolean) {
         if (value && !this.animationEnabled) {
-            this.animateWrapper();
+            this.resumeAnimation();
         }
         this.animationEnabled = value;
     }
@@ -18,14 +41,42 @@ export abstract class Animation {
     protected camera: PerspectiveCamera | undefined;
     protected starterCameraDimensions: {tanFov: number; canvasHeight: number} | undefined;
 
-    protected abstract animate(): boolean;
+    protected abstract animate(frameTime: number): boolean;
     protected abstract initScene(): void;
+    private lastRenderTime = 0;
 
-    private animateWrapper() {
+    private lastFpsEmitTime = 0;
+    private frameCountSinceLastFps = 0;
+    private emitFps(newTime: number) {
+        const diffTime = newTime - this.lastFpsEmitTime;
+        if (diffTime > this.fpsEmitDelay) {
+            const fps = (this.frameCountSinceLastFps * 1000) / diffTime;
+            this.dispatchEvent(new FpsEvent(fps));
+            this.frameCountSinceLastFps = 0;
+            this.lastFpsEmitTime = newTime;
+        } else {
+            ++this.frameCountSinceLastFps;
+        }
+    }
+
+    private resumeAnimation() {
+        requestAnimationFrame((firstTime) => {
+            this.lastRenderTime = firstTime;
+            this.lastFpsEmitTime = firstTime;
+            this.frameCountSinceLastFps = 0;
+            requestAnimationFrame((time) => this.animateWrapper(time));
+        });
+    }
+
+    private animateWrapper(newTime: number) {
         if (this.animationEnabled) {
-            const shouldKeepRendering = this.animate();
+            const previousLastRenderTime = this.lastRenderTime;
+            this.emitFps(newTime);
+            // update this before running animate so that animate doesn't mess up our FPS if it's really long
+            this.lastRenderTime = newTime;
+            const shouldKeepRendering = this.animate(newTime - previousLastRenderTime);
             if (shouldKeepRendering) {
-                requestAnimationFrame(() => this.animateWrapper());
+                requestAnimationFrame((newTime) => this.animateWrapper(newTime));
             }
         }
     }
@@ -37,7 +88,7 @@ export abstract class Animation {
 
         this.initScene();
         this.camera.position.z = 3;
-        this.animateWrapper();
+        this.resumeAnimation();
     }
 
     public updateSize(rawNewSize: Size): void {

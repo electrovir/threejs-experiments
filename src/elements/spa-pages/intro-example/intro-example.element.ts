@@ -1,9 +1,10 @@
 import {defineFunctionalElement, html, listen} from 'element-vir';
 import {css, unsafeCSS} from 'lit';
+import {FpsEvent} from '../../../shared-interfaces/animation';
 import {Size} from '../../../shared-interfaces/size';
 import {createThrottle} from '../../../throttle';
-import {ResizeCanvasElement} from '../../resize-canvas.element';
-import {CubeAnimation} from './cube-animation';
+import {ResizeCanvasElement} from '../../animation/resize-canvas.element';
+import {SingleColorCubeAnimation} from './single-color-cube-animation';
 
 // https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html
 // https://jsfiddle.net/Q4Jpu/
@@ -30,9 +31,10 @@ export const IntroExampleElement = defineFunctionalElement({
     `,
     props: {
         animationEnabled: true,
-        animation: undefined as undefined | CubeAnimation,
+        animation: undefined as undefined | SingleColorCubeAnimation,
         resizeListener: undefined as undefined | ((size: Size) => void),
         thing: 5,
+        currentFps: 0,
     },
     renderCallback: ({props}) => {
         return html`
@@ -52,10 +54,12 @@ export const IntroExampleElement = defineFunctionalElement({
                 ) introduction with window
                 <!-- prettier-ignore -->
                 <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
+                <br>
+                FPS: ${props.currentFps.toFixed(1)}
             </p>
             <${ResizeCanvasElement}
                     ${listen(ResizeCanvasElement.events.canvasInit, (event) => {
-                        props.animation = new CubeAnimation(
+                        props.animation = new SingleColorCubeAnimation(
                             event.detail,
                             props.animationEnabled,
                             undefined,
@@ -64,6 +68,9 @@ export const IntroExampleElement = defineFunctionalElement({
                             if (props.animation) {
                                 props.animation.updateSize(size);
                             }
+                        });
+                        props.animation.addEventListener(FpsEvent.eventName, (event) => {
+                            props.currentFps = event.detail;
                         });
                     })}
                     ${listen(ResizeCanvasElement.events.canvasResize, (event) => {

@@ -1,7 +1,7 @@
 import {BoxGeometry, Mesh, MeshBasicMaterial} from 'three';
 import {Animation} from '../../../shared-interfaces/animation';
 
-export class CubeAnimation extends Animation {
+export class SingleColorCubeAnimation extends Animation {
     constructor(
         canvas: HTMLCanvasElement,
         protected animationEnabled = true,
@@ -19,13 +19,15 @@ export class CubeAnimation extends Animation {
         this.threeJsScene.add(this.cube);
     }
 
-    protected animate(): boolean {
+    protected animate(frameTime: number): boolean {
         if (!this.camera) {
             throw new Error(`Animation started but camera was not found.`);
         }
 
-        this.cube.rotation.x += 0.01;
-        this.cube.rotation.y += 0.01;
+        const diff = ((0.01 * 60) / 1000) * frameTime;
+
+        this.cube.rotation.x += diff;
+        this.cube.rotation.y += diff;
 
         this.webGlRenderer.render(this.threeJsScene, this.camera);
         return true;
