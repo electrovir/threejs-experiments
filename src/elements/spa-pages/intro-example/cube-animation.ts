@@ -1,37 +1,13 @@
-import {BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene, WebGLRenderer} from 'three';
+import {BoxGeometry, Mesh, MeshBasicMaterial} from 'three';
+import {Animation} from '../../../shared-interfaces/animation';
 
-type Size = {
-    w: number;
-    h: number;
-};
-
-export function elementToSize(element: Element): Size {
-    const elementRect = element.getBoundingClientRect();
-    return {
-        w: elementRect.width,
-        h: elementRect.height,
-    };
-}
-
-export class CubeAnimation {
+export class CubeAnimation extends Animation {
     constructor(
         canvas: HTMLCanvasElement,
+        protected animationEnabled = true,
         private readonly cubeColor = 0x00ff00,
-        public animationEnabled = true,
     ) {
-        this.webGlRenderer = new WebGLRenderer({canvas});
-
-        const initSize = elementToSize(canvas);
-        this.updateSize(initSize);
-
-        this.camera = new PerspectiveCamera(75, initSize.w / initSize.h, 0.1, 1000);
-        const tanFov = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
-        this.starterCameraDimensions = {tanFov, canvasHeight: initSize.h};
-
-        this.threeJsScene.add(this.cube);
-        this.camera.position.z = 3;
-
-        this.animate();
+        super(canvas, animationEnabled);
     }
 
     private cube: Mesh<BoxGeometry, MeshBasicMaterial> = new Mesh(
@@ -39,46 +15,19 @@ export class CubeAnimation {
         new MeshBasicMaterial({color: this.cubeColor}),
     );
 
-    private webGlRenderer: WebGLRenderer;
-    private threeJsScene = new Scene();
-    private camera: PerspectiveCamera;
-    private starterCameraDimensions: {tanFov: number; canvasHeight: number} | undefined;
-
-    private animate() {
-        requestAnimationFrame(() => this.animate());
-        if (this.animationEnabled) {
-            this.cube.rotation.x += 0.01;
-            this.cube.rotation.y += 0.01;
-
-            this.webGlRenderer.render(this.threeJsScene, this.camera);
-        }
+    protected initScene() {
+        this.threeJsScene.add(this.cube);
     }
 
-    public updateSize(newSize: {w: number; h: number}): void {
-        if (!this.webGlRenderer) {
-            throw new Error(`renderer not found.`);
+    protected animate(): boolean {
+        if (!this.camera) {
+            throw new Error(`Animation started but camera was not found.`);
         }
 
-        this.webGlRenderer.setSize(newSize.w, newSize.h);
+        this.cube.rotation.x += 0.01;
+        this.cube.rotation.y += 0.01;
 
-        if (this.camera) {
-            if (!this.starterCameraDimensions) {
-                throw new Error(
-                    `Camera was defined for updating canvas size but not the initial camera dimensions.`,
-                );
-            }
-            if (!this.threeJsScene) {
-                throw new Error(`Camera was defined for updating canvas size but not the scene.`);
-            }
-            this.camera.aspect = newSize.w / newSize.h;
-            this.camera.fov =
-                (360 / Math.PI) *
-                Math.atan(
-                    this.starterCameraDimensions.tanFov *
-                        (newSize.h / this.starterCameraDimensions.canvasHeight),
-                );
-
-            this.camera.updateProjectionMatrix();
-        }
+        this.webGlRenderer.render(this.threeJsScene, this.camera);
+        return true;
     }
 }

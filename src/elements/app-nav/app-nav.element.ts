@@ -1,7 +1,14 @@
-import {assign, defineFunctionalElement, ElementEvent, eventInit, html} from 'element-vir';
+import {
+    assign,
+    defineFunctionalElement,
+    ElementEvent,
+    eventInit,
+    html,
+    onDomCreated,
+} from 'element-vir';
 import {css} from 'lit';
 import {getEnumTypedValues, isEnumValue} from 'virmator/dist/augments/object';
-import {addRouteListener, removeRouteListener} from '../../router/route-listener';
+import {addRouteListener} from '../../router/route-listener';
 import {SpaRoute} from '../../router/spa-routes';
 import {AppRouteLinkElement} from './app-route-link.element';
 
@@ -58,27 +65,25 @@ export const AppNavElement = defineFunctionalElement({
     events: {
         navUpdate: eventInit<ValidNavRoutes>(),
     },
-    connectedCallback: ({props, dispatchEvent, events}) => {
-        props.routeListener = addRouteListener<ValidNavRoutes>(
-            true,
-            sanitizeSpaRoutes,
-            (routes) => {
-                const rootRoute = routes[0];
-                if (rootRoute !== props.spaRoute) {
-                    props.spaRoute = rootRoute;
-                    dispatchEvent(new ElementEvent(events.navUpdate, routes));
-                }
-            },
-        );
-    },
-    disconnectedCallback: ({props}) => {
-        if (props.routeListener) {
-            removeRouteListener(props.routeListener);
-        }
-    },
-    renderCallback: () => {
+    renderCallback: ({props, events, dispatchEvent}) => {
         return html`
-            <ul>
+            <ul
+                ${onDomCreated(() => {
+                    if (!props.routeListener) {
+                        props.routeListener = addRouteListener<ValidNavRoutes>(
+                            true,
+                            sanitizeSpaRoutes,
+                            (routes) => {
+                                const rootRoute = routes[0];
+                                if (rootRoute !== props.spaRoute) {
+                                    props.spaRoute = rootRoute;
+                                    dispatchEvent(new ElementEvent(events.navUpdate, routes));
+                                }
+                            },
+                        );
+                    }
+                })}
+            >
                 ${getEnumTypedValues(SpaRoute).map((spaRoute) => {
                     return html`
                     <li>
