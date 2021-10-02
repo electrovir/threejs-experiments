@@ -1,4 +1,4 @@
-import { n, r } from './common/lit-element-989d7d0e.js';
+import { n as n$1, r as r$2 } from './common/lit-element-989d7d0e.js';
 import { T, y } from './common/lit-html-7e28c940.js';
 
 /**
@@ -92,7 +92,7 @@ function createPropertyDescriptorMap(propertyInit) {
     }, {});
 }
 
-class FunctionalElementBaseClass extends n {
+class FunctionalElementBaseClass extends n$1 {
 }
 
 function createRenderParams(element, eventsMap) {
@@ -127,7 +127,7 @@ function defineFunctionalElement(functionalElementInit) {
             }
         },
         _a.tagName = functionalElementInit.tagName,
-        _a.styles = functionalElementInit.styles || r ``,
+        _a.styles = functionalElementInit.styles || r$2 ``,
         _a.propNames = Object.keys(functionalElementInit.props || {}),
         _a.events = eventsMap,
         _a.renderCallback = functionalElementInit.renderCallback,
@@ -139,10 +139,22 @@ function defineFunctionalElement(functionalElementInit) {
 
 /**
  * @license
+ * Copyright 2020 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */const r=o=>void 0===o.strings;
+
+/**
+ * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
 const t={ATTRIBUTE:1,CHILD:2,PROPERTY:3,BOOLEAN_ATTRIBUTE:4,EVENT:5,ELEMENT:6},e$1=t=>(...e)=>({_$litDirective$:t,values:e});class i$1{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i;}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}}
+
+/**
+ * @license
+ * Copyright 2017 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */const e$2=(i,t)=>{var s,o;const n=i._$AN;if(void 0===n)return !1;for(const i of n)null===(o=(s=i)._$AO)||void 0===o||o.call(s,t,!1),e$2(i,t);return !0},o=i=>{let t,s;do{if(void 0===(t=i._$AM))break;s=t._$AN,s.delete(i),i=t;}while(0===(null==s?void 0:s.size))},n=i=>{for(let t;t=i._$AM;i=t){let s=t._$AN;if(void 0===s)t._$AN=s=new Set;else if(s.has(i))break;s.add(i),l(t);}};function r$1(i){void 0!==this._$AN?(o(this),this._$AM=i,n(this)):this._$AM=i;}function h(i,t=!1,s=0){const n=this._$AH,r=this._$AN;if(void 0!==r&&0!==r.size)if(t)if(Array.isArray(n))for(let i=s;i<n.length;i++)e$2(n[i],!1),o(n[i]);else null!=n&&(e$2(n,!1),o(n));else e$2(this,i);}const l=i=>{var t$1,e,o,n;i.type==t.CHILD&&(null!==(t$1=(o=i)._$AP)&&void 0!==t$1||(o._$AP=h),null!==(e=(n=i)._$AQ)&&void 0!==e||(n._$AQ=r$1));};class d extends i$1{constructor(){super(...arguments),this._$AN=void 0;}_$AT(i,t,s){super._$AT(i,t,s),n(this),this.isConnected=i._$AU;}_$AO(i,t=!0){var s,n;i!==this.isConnected&&(this.isConnected=i,i?null===(s=this.reconnected)||void 0===s||s.call(this):null===(n=this.disconnected)||void 0===n||n.call(this)),t&&(e$2(this,i),o(this));}setValue(t){if(r(this._$Ct))this._$Ct._$AI(t,this);else {const i=[...this._$Ct._$AH];i[this._$Ci]=t,this._$Ct._$AI(i,this,0);}}disconnected(){}reconnected(){}}
 
 function extractFunctionalElement(partInfo, directiveName) {
     assertsIsElementPartInfo(partInfo, directiveName);
@@ -160,6 +172,39 @@ function assertsIsElementPartInfo(partInfo, directiveName) {
         throw new Error(`${directiveName} directive found no element`);
     }
 }
+
+/**
+ * The directive generics (in listenDirective) are not strong enough to maintain their values. Thus,
+ * the directive call is wrapped in this function.
+ */
+function assignWithCleanup(propertyDescriptor, value, cleanupCallback) {
+    return assignWithCleanupDirective(propertyDescriptor.propName, value, cleanupCallback);
+}
+class AssignWithCleanupDirectiveClass extends d {
+    constructor(partInfo) {
+        super(partInfo);
+        this.element = extractFunctionalElement(partInfo, 'assign');
+    }
+    disconnected() {
+        if (this.lastValue != undefined && this.lastCallback != undefined) {
+            this.lastCallback(this.lastValue);
+        }
+    }
+    render(propName, value, cleanupCallback, equalityCheck = (a, b) => a === b) {
+        if (!(propName in this.element.instanceProps)) {
+            throw new Error(`${this.element.tagName} element has no property of name "${propName}"`);
+        }
+        // reference equality check!
+        if (!equalityCheck(this.lastValue, value)) {
+            cleanupCallback(this.lastValue);
+        }
+        this.element.instanceProps[propName] = value;
+        this.lastValue = value;
+        this.lastCallback = cleanupCallback;
+        return T;
+    }
+}
+const assignWithCleanupDirective = e$1(AssignWithCleanupDirectiveClass);
 
 /**
  * The directive generics (in listenDirective) are not strong enough to maintain their values. Thus,
@@ -396,4 +441,4 @@ function html(inputTemplateStrings, ...inputValues) {
     return htmlTemplate;
 }
 
-export { ElementEvent, assign, defineFunctionalElement, eventInit, html, listen, onDomCreated, onResize };
+export { ElementEvent, assign, assignWithCleanup, defineFunctionalElement, eventInit, html, listen, onDomCreated, onResize };

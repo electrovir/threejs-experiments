@@ -1,9 +1,9 @@
 import {assign, assignWithCleanup, defineFunctionalElement, html, listen} from "../../../../_snowpack/pkg/element-vir.js";
 import {css, unsafeCSS} from "../../../../_snowpack/pkg/lit.js";
 import {AnimationElement} from "../../animation/animation.element.js";
-import {SingleColorCubeAnimation} from "./single-color-cube-animation.js";
-export const IntroExampleElement = defineFunctionalElement({
-  tagName: "vir-intro-example",
+import {RainbowCubeAnimation} from "./rainbow-cube-animation.js";
+export const RainbowCubeElement = defineFunctionalElement({
+  tagName: "vir-rainbow-cube",
   styles: css`
         :host {
             display: flex;
@@ -21,6 +21,11 @@ export const IntroExampleElement = defineFunctionalElement({
             padding: 8px;
             flex-grow: 1;
         }
+
+        button {
+            width: 100px;
+            padding: 6px;
+        }
     `,
   props: {
     animation: void 0,
@@ -29,29 +34,14 @@ export const IntroExampleElement = defineFunctionalElement({
   },
   renderCallback: ({props}) => {
     if (!props.animation) {
-      props.animation = new SingleColorCubeAnimation(65280);
+      props.animation = new RainbowCubeAnimation();
     }
     return html`
-        <h1>Intro Example</h1>
+        <h1>Rainbow Cube</h1>
         <p>
-            From the
-            <!-- ignore so there aren't spaces inside of the link -->
-            <!-- prettier-ignore -->
-            <a
-                href="https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene"
-                >Creating a Scene</a>
-            (
-            <!-- prettier-ignore -->
-            <a
-            href="https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html"
-            >source code</a>
-            ) introduction with window
-            <!-- prettier-ignore -->
-            <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
+            Variation on the intro example. Using <a href="https://threejs.org/docs/?q=light#api/en/lights/AmbientLight">AmbientLight</a>, <a href="https://threejs.org/docs/?q=light#api/en/lights/PointLight">PointLight</a>, and <a href="https://threejs.org/docs/?q=mesh#api/en/materials/MeshPhysicalMaterial">MeshPhysicalMaterial</a> with <a href="https://threejs.org/docs/?q=mesh#api/en/materials/MeshPhysicalMaterial.clearcoat">clear coat</a>.
             <br>
-            <button @click=${() => {
-      props.animation = new SingleColorCubeAnimation(65280);
-    }}>reset</button>
+            <button @click=${() => props.animationEnabled = !props.animationEnabled}>${props.animationEnabled ? "pause" : "play"}</button>
             <br>
             FPS: ${props.currentFps.toFixed(1)}
         </p>

@@ -1,6 +1,6 @@
 import {BoxGeometry, Mesh, MeshBasicMaterial, Scene} from "../../../../_snowpack/pkg/three.js";
-import {Animation} from "../../../shared-interfaces/animation.js";
-export class SingleColorCubeAnimation extends Animation {
+import {ThreeJsAnimation} from "../../../shared-interfaces/animation.js";
+export class SingleColorCubeAnimation extends ThreeJsAnimation {
   constructor(cubeColor = 65280) {
     super();
     this.cubeColor = cubeColor;

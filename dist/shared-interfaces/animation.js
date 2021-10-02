@@ -6,7 +6,7 @@ const _FpsEvent = class extends CustomEvent {
 };
 export let FpsEvent = _FpsEvent;
 FpsEvent.eventName = "fpsCount";
-export class Animation extends EventTarget {
+export class ThreeJsAnimation extends EventTarget {
   constructor() {
     super(...arguments);
     this.lastRenderTime = 0;
@@ -42,7 +42,7 @@ export class Animation extends EventTarget {
     }
   }
   isInitialized() {
-    return !!(this.canvas && this.camera && this.scene && this.animationEnabled && this.fpsEmitDelay && this.webGlRenderer && this.starterCameraDimensions);
+    return !!(this.canvas && this.camera && this.scene && this.webGlRenderer);
   }
   addEventListener(type, callback, options) {
     super.addEventListener(type, callback, options);

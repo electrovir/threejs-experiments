@@ -21,17 +21,12 @@ export const AnimationElement = defineFunctionalElement({
   props: {
     animationEnabled: true,
     animation: void 0,
-    lastAnimation: void 0,
     canvas: void 0,
     canvasSize: void 0,
     resizeListener: void 0
   },
   renderCallback: ({props, dispatchEvent, events}) => {
-    if (props.animation && props.animation !== props.lastAnimation && props.canvas) {
-      if (props.lastAnimation) {
-        props.lastAnimation.destroy();
-      }
-      props.lastAnimation = props.animation;
+    if (props.animation && !props.animation.isInitialized() && props.canvas) {
       props.animation.init(props.canvas, props.animationEnabled, void 0, props.canvasSize);
       props.animation.addEventListener(FpsEvent.eventName, (event) => {
         dispatchEvent(new ElementEvent(events.fpsUpdate, event.detail));
@@ -39,6 +34,9 @@ export const AnimationElement = defineFunctionalElement({
       props.resizeListener = createThrottle((size) => {
         props.animation?.updateSize(size);
       }, 250);
+    }
+    if (props.animation && props.animation.isInitialized()) {
+      props.animation.enableAnimation(props.animationEnabled);
     }
     return html`
             <${ResizeCanvasElement}
