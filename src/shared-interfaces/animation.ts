@@ -11,7 +11,7 @@ export class FpsEvent extends CustomEvent<number> {
     }
 }
 
-export class Animation extends EventTarget {
+export class ThreeJsAnimation extends EventTarget {
     // ==============================================
     //                override these
     // ==============================================
@@ -71,16 +71,8 @@ export class Animation extends EventTarget {
         }
     }
 
-    private isInitialized() {
-        return !!(
-            this.canvas &&
-            this.camera &&
-            this.scene &&
-            this.animationEnabled &&
-            this.fpsEmitDelay &&
-            this.webGlRenderer &&
-            this.starterCameraDimensions
-        );
+    public isInitialized() {
+        return !!(this.canvas && this.camera && this.scene && this.webGlRenderer);
     }
 
     public addEventListener<EventType extends string>(

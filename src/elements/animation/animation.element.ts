@@ -1,6 +1,6 @@
 import {defineFunctionalElement, ElementEvent, eventInit, html, listen} from 'element-vir';
 import {css, unsafeCSS} from 'lit';
-import {Animation, FpsEvent} from '../../shared-interfaces/animation';
+import {FpsEvent, ThreeJsAnimation} from '../../shared-interfaces/animation';
 import {Size} from '../../shared-interfaces/size';
 import {createThrottle} from '../../throttle';
 import {ResizeCanvasElement} from './resize-canvas.element';
@@ -22,18 +22,13 @@ export const AnimationElement = defineFunctionalElement({
     },
     props: {
         animationEnabled: true,
-        animation: undefined as undefined | Animation,
-        lastAnimation: undefined as undefined | Animation,
+        animation: undefined as undefined | ThreeJsAnimation,
         canvas: undefined as undefined | HTMLCanvasElement,
         canvasSize: undefined as undefined | Size,
         resizeListener: undefined as undefined | ((size: Size) => void),
     },
     renderCallback: ({props, dispatchEvent, events}) => {
-        if (props.animation && props.animation !== props.lastAnimation && props.canvas) {
-            if (props.lastAnimation) {
-                props.lastAnimation.destroy();
-            }
-            props.lastAnimation = props.animation;
+        if (props.animation && !props.animation.isInitialized() && props.canvas) {
             props.animation.init(props.canvas, props.animationEnabled, undefined, props.canvasSize);
             props.animation.addEventListener(FpsEvent.eventName, (event) => {
                 dispatchEvent(new ElementEvent(events.fpsUpdate, event.detail));
@@ -41,6 +36,9 @@ export const AnimationElement = defineFunctionalElement({
             props.resizeListener = createThrottle((size: Size) => {
                 props.animation?.updateSize(size);
             }, 250);
+        }
+        if (props.animation && props.animation.isInitialized()) {
+            props.animation.enableAnimation(props.animationEnabled);
         }
 
         return html`
