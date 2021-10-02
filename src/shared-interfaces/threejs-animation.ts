@@ -11,6 +11,14 @@ export class FpsEvent extends CustomEvent<number> {
     }
 }
 
+export class DestroyedEvent extends CustomEvent<never> {
+    static readonly eventName = 'animationDestroyed';
+
+    constructor() {
+        super(DestroyedEvent.eventName, {bubbles: true, composed: true});
+    }
+}
+
 export class ThreeJsAnimation extends EventTarget {
     // ==============================================
     //                override these
@@ -43,17 +51,39 @@ export class ThreeJsAnimation extends EventTarget {
 
     private animationEnabled = false;
     private fpsEmitDelay = 500;
+    private isDestroyed = false;
 
-    public destroy() {
-        this.animationEnabled = false;
+    private destroyWebGlRenderer() {
+        if (this.webGlRenderer) {
+            this.webGlRenderer.state.reset();
+            // this doesn't actually work. It fails in Safari, Chrome, and Firefox.
+            // this.webGlRenderer.forceContextLoss();
+            delete (this.webGlRenderer as Partial<WebGLRenderer>).context;
+            this.webGlRenderer.dispose();
+        }
         this.webGlRenderer = undefined;
-        this.camera = undefined;
+    }
+
+    /**
+     * Unfortunately this doesn't fully clean up the webgl context and, from scouring stackoverflow,
+     * public email threads, threejs documentation, and random guides, there's no way to REALLY do
+     * that. None of suggested answers (when there actually are any) work. (If you find a way that
+     * works please tell me!)
+     */
+    public destroy() {
+        this.dispatchEvent(new DestroyedEvent());
+        this.animationEnabled = false;
+        this.isDestroyed = true;
+        this.animate = () => false;
+        this.scene?.clear();
         this.scene = undefined;
+        this.webGlRenderer?.clear();
+        this.destroyWebGlRenderer();
+        this.camera = undefined;
         this.canvas = undefined;
         this.starterCameraDimensions = undefined;
         this.lastRenderTime = 0;
         this.lastFpsEmitTime = 0;
-        this.animate = () => false;
     }
 
     public init(
@@ -62,6 +92,10 @@ export class ThreeJsAnimation extends EventTarget {
         fpsEmitDelay = 500,
         size?: Size,
     ) {
+        if (this.isDestroyed) {
+            console.error(this);
+            throw new Error(`Cannot initialize a destroyed animation.`);
+        }
         this.canvas = canvas;
         this.animationEnabled = startAnimating;
         this.fpsEmitDelay = fpsEmitDelay || 500;
@@ -79,6 +113,8 @@ export class ThreeJsAnimation extends EventTarget {
         type: EventType,
         callback: EventType extends typeof FpsEvent.eventName
             ? (event: FpsEvent) => void
+            : EventType extends typeof DestroyedEvent.eventName
+            ? (event: DestroyedEvent) => void
             : EventListenerOrEventListenerObject,
         options?: AddEventListenerOptions | boolean,
     ): typeof callback {

@@ -1,7 +1,11 @@
 import {defineFunctionalElement, ElementEvent, eventInit, html, listen} from 'element-vir';
 import {css, unsafeCSS} from 'lit';
-import {FpsEvent, ThreeJsAnimation} from '../../shared-interfaces/animation';
 import {Size} from '../../shared-interfaces/size';
+import {
+    DestroyedEvent,
+    FpsEvent,
+    ThreeJsAnimation,
+} from '../../shared-interfaces/threejs-animation';
 import {createThrottle} from '../../throttle';
 import {ResizeCanvasElement} from './resize-canvas.element';
 
@@ -28,17 +32,28 @@ export const AnimationElement = defineFunctionalElement({
         resizeListener: undefined as undefined | ((size: Size) => void),
     },
     renderCallback: ({props, dispatchEvent, events}) => {
-        if (props.animation && !props.animation.isInitialized() && props.canvas) {
-            props.animation.init(props.canvas, props.animationEnabled, undefined, props.canvasSize);
-            props.animation.addEventListener(FpsEvent.eventName, (event) => {
-                dispatchEvent(new ElementEvent(events.fpsUpdate, event.detail));
-            });
-            props.resizeListener = createThrottle((size: Size) => {
-                props.animation?.updateSize(size);
-            }, 250);
-        }
-        if (props.animation && props.animation.isInitialized()) {
-            props.animation.enableAnimation(props.animationEnabled);
+        if (props.animation) {
+            if (!props.animation.isInitialized() && props.canvas) {
+                props.animation.init(
+                    props.canvas,
+                    props.animationEnabled,
+                    undefined,
+                    props.canvasSize,
+                );
+                props.animation.addEventListener(FpsEvent.eventName, (event) => {
+                    dispatchEvent(new ElementEvent(events.fpsUpdate, event.detail));
+                });
+                props.resizeListener = createThrottle((size: Size) => {
+                    props.animation?.updateSize(size);
+                }, 250);
+                props.animation.addEventListener(
+                    DestroyedEvent.eventName,
+                    () => (props.animation = undefined),
+                );
+            }
+            if (props.animation.isInitialized()) {
+                props.animation.enableAnimation(props.animationEnabled);
+            }
         }
 
         return html`

@@ -9,9 +9,8 @@ import {
     Scene,
     WebGLRenderer,
 } from 'three';
-import {ThreeJsAnimation} from '../../../shared-interfaces/animation';
+import {ThreeJsAnimation} from '../../../shared-interfaces/threejs-animation';
 
-// https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html
 export class RainbowCubeAnimation extends ThreeJsAnimation {
     constructor(private readonly cubeColor = 0xff0000, private readonly cubeSize = 1) {
         super();

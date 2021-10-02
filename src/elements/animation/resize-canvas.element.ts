@@ -2,12 +2,15 @@ import {
     defineFunctionalElement,
     ElementEvent,
     eventInit,
+    html,
     onDomCreated,
     onResize,
 } from 'element-vir';
 import {css} from 'lit';
-import {html} from 'lit/static-html.js';
 import {Size} from '../../shared-interfaces/size';
+
+// store the canvas in a single place so we don't create multiple contexts
+let GlobalCanvas: undefined | HTMLCanvasElement = undefined;
 
 export const ResizeCanvasElement = defineFunctionalElement({
     tagName: 'vir-resize-canvas',
@@ -37,6 +40,7 @@ export const ResizeCanvasElement = defineFunctionalElement({
             inset: 0;
             width: 100%;
             height: 100%;
+            background-color: black;
         }
     `,
     events: {
@@ -44,6 +48,9 @@ export const ResizeCanvasElement = defineFunctionalElement({
         canvasResize: eventInit<Size>(),
     },
     renderCallback: ({dispatchEvent, events}) => {
+        if (GlobalCanvas) {
+            dispatchEvent(new ElementEvent(events.canvasInit, GlobalCanvas));
+        }
         return html`
             <div
                 ${onResize((updateEntry) => {
@@ -56,17 +63,22 @@ export const ResizeCanvasElement = defineFunctionalElement({
                 })}
                 class="canvas-wrapper"
             >
-                <canvas
-                    ${onDomCreated((element) => {
-                        if (element instanceof HTMLCanvasElement) {
-                            dispatchEvent(new ElementEvent(events.canvasInit, element));
-                        } else {
-                            throw new Error(
-                                `Canvas DOM was created but didn't send back a canvas element.`,
-                            );
-                        }
-                    })}
-                ></canvas>
+                ${GlobalCanvas
+                    ? GlobalCanvas
+                    : html`
+                          <canvas
+                              ${onDomCreated((element) => {
+                                  if (element instanceof HTMLCanvasElement) {
+                                      GlobalCanvas = element;
+                                      dispatchEvent(new ElementEvent(events.canvasInit, element));
+                                  } else {
+                                      throw new Error(
+                                          `Canvas DOM was created but didn't send back a canvas element.`,
+                                      );
+                                  }
+                              })}
+                          ></canvas>
+                      `}
             </div>
         `;
     },

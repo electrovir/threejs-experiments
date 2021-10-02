@@ -1,5 +1,5 @@
 export enum SpaRoute {
     Home = 'home',
-    IntroExample = 'intro-example',
+    SingleColorCube = 'single-color-cube',
     RainbowCube = 'rainbow-cube',
 }
