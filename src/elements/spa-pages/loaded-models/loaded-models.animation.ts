@@ -18,8 +18,8 @@ import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
 
 export enum AvailableModels {
     Bottle = 'bottle',
-    Sphere = 'sphere',
     Cube = 'cube',
+    Sphere = 'sphere',
 }
 
 function setMorphDirections(mesh: Mesh & {morphDirections?: number[]}) {
@@ -222,6 +222,7 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
     protected initScene(camera: Camera) {
         camera.position.set(0, 0, 6);
 
+        this.showModel(true, AvailableModels.Sphere);
         this.showModel(true, AvailableModels.Bottle);
         this.addLights(this.scene);
         return this.scene;
