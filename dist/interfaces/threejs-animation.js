@@ -121,7 +121,6 @@ export class ThreeJsAnimation extends EventTarget {
     const tanFov = Math.tan(Math.PI / 180 * this.camera.fov / 2);
     this.camera.position.z = 3;
     this.scene = this.initScene(this.camera);
-    console.log("scene loaded");
     this.starterCameraDimensions = {tanFov, canvasHeight: initSize.h};
     this.resumeAnimation();
   }
