@@ -2,11 +2,12 @@ import {
   defineFunctionalElement,
   ElementEvent,
   eventInit,
+  html,
   onDomCreated,
   onResize
 } from "../../../_snowpack/pkg/element-vir.js";
 import {css} from "../../../_snowpack/pkg/lit.js";
-import {html} from "../../../_snowpack/pkg/lit/static-html.js";
+let GlobalCanvas = void 0;
 export const ResizeCanvasElement = defineFunctionalElement({
   tagName: "vir-resize-canvas",
   styles: css`
@@ -35,6 +36,7 @@ export const ResizeCanvasElement = defineFunctionalElement({
             inset: 0;
             width: 100%;
             height: 100%;
+            background-color: black;
         }
     `,
   events: {
@@ -42,6 +44,9 @@ export const ResizeCanvasElement = defineFunctionalElement({
     canvasResize: eventInit()
   },
   renderCallback: ({dispatchEvent, events}) => {
+    if (GlobalCanvas) {
+      dispatchEvent(new ElementEvent(events.canvasInit, GlobalCanvas));
+    }
     return html`
             <div
                 ${onResize((updateEntry) => {
@@ -52,15 +57,18 @@ export const ResizeCanvasElement = defineFunctionalElement({
     })}
                 class="canvas-wrapper"
             >
-                <canvas
-                    ${onDomCreated((element) => {
+                ${GlobalCanvas ? GlobalCanvas : html`
+                          <canvas
+                              ${onDomCreated((element) => {
       if (element instanceof HTMLCanvasElement) {
+        GlobalCanvas = element;
         dispatchEvent(new ElementEvent(events.canvasInit, element));
       } else {
         throw new Error(`Canvas DOM was created but didn't send back a canvas element.`);
       }
     })}
-                ></canvas>
+                          ></canvas>
+                      `}
             </div>
         `;
   }

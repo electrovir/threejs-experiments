@@ -4,6 +4,7 @@
     "lit": "./lit.js",
     "lit/static-html.js": "./lit/static-html.js",
     "three": "./three.js",
+    "three/examples/jsm/loaders/GLTFLoader.js": "./three/examples/jsm/loaders/GLTFLoader.js",
     "virmator/dist/augments/object": "./virmator/dist/augments/object.js"
   }
 }
