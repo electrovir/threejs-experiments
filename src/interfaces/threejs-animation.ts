@@ -184,7 +184,6 @@ export class ThreeJsAnimation extends EventTarget {
 
         this.camera.position.z = 3;
         this.scene = this.initScene(this.camera);
-        console.log('scene loaded');
         this.starterCameraDimensions = {tanFov, canvasHeight: initSize.h};
         this.resumeAnimation();
     }
