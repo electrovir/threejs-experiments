@@ -7,7 +7,7 @@ import {
     onResize,
 } from 'element-vir';
 import {css} from 'lit';
-import {Size} from '../../shared-interfaces/size';
+import {Size} from '../../interfaces/size';
 
 // store the canvas in a single place so we don't create multiple contexts
 let GlobalCanvas: undefined | HTMLCanvasElement = undefined;

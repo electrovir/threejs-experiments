@@ -8,7 +8,7 @@ import {
     listen,
 } from 'element-vir';
 import {css, unsafeCSS} from 'lit';
-import {ThreeJsAnimation} from '../../shared-interfaces/threejs-animation';
+import {ThreeJsAnimation} from '../../interfaces/threejs-animation';
 import {AnimationElement} from './animation.element';
 
 export const AnimationSpaPageElement = defineFunctionalElement({

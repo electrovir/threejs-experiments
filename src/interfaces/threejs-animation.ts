@@ -33,14 +33,14 @@ export class ThreeJsAnimation extends EventTarget {
         return false;
     }
     /** Method that is called once to initialize the ThreeJS scene. */
-    protected initScene(): Scene {
+    protected initScene(camera: Camera): Scene {
         return new Scene();
     }
     // ==============================================
 
     private camera: PerspectiveCamera | undefined;
     private canvas: HTMLCanvasElement | undefined;
-    private scene: Scene | undefined;
+    protected scene: Scene | undefined;
     private webGlRenderer: WebGLRenderer | undefined;
 
     protected starterCameraDimensions: {tanFov: number; canvasHeight: number} | undefined;
@@ -55,6 +55,8 @@ export class ThreeJsAnimation extends EventTarget {
 
     private destroyWebGlRenderer() {
         if (this.webGlRenderer) {
+            this.webGlRenderer.renderLists.dispose();
+            this.webGlRenderer?.clear();
             this.webGlRenderer.state.reset();
             // this doesn't actually work. It fails in Safari, Chrome, and Firefox.
             // this.webGlRenderer.forceContextLoss();
@@ -62,6 +64,12 @@ export class ThreeJsAnimation extends EventTarget {
             this.webGlRenderer.dispose();
         }
         this.webGlRenderer = undefined;
+    }
+
+    private destroyScene() {
+        // wipe out the rendered scene to just black pixels
+        this.scene?.clear();
+        this.scene = undefined;
     }
 
     /**
@@ -75,9 +83,7 @@ export class ThreeJsAnimation extends EventTarget {
         this.animationEnabled = false;
         this.isDestroyed = true;
         this.animate = () => false;
-        this.scene?.clear();
-        this.scene = undefined;
-        this.webGlRenderer?.clear();
+        this.destroyScene();
         this.destroyWebGlRenderer();
         this.camera = undefined;
         this.canvas = undefined;
@@ -115,7 +121,7 @@ export class ThreeJsAnimation extends EventTarget {
             ? (event: FpsEvent) => void
             : EventType extends typeof DestroyedEvent.eventName
             ? (event: DestroyedEvent) => void
-            : EventListenerOrEventListenerObject,
+            : (event: any) => void,
         options?: AddEventListenerOptions | boolean,
     ): typeof callback {
         super.addEventListener(type, callback, options);
@@ -172,13 +178,14 @@ export class ThreeJsAnimation extends EventTarget {
         }
     }
 
-    private initSizes(initSize: Size) {
+    private initSizes(initSize: Size): void {
         this.camera = new PerspectiveCamera(75, initSize.w / initSize.h, 0.1, 1000);
         const tanFov = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
-        this.starterCameraDimensions = {tanFov, canvasHeight: initSize.h};
 
-        this.scene = this.initScene();
         this.camera.position.z = 3;
+        this.scene = this.initScene(this.camera);
+        console.log('scene loaded');
+        this.starterCameraDimensions = {tanFov, canvasHeight: initSize.h};
         this.resumeAnimation();
     }
 
@@ -201,7 +208,7 @@ export class ThreeJsAnimation extends EventTarget {
                 );
             }
             if (!this.scene) {
-                throw new Error(`Camera was defined for updating canvas size but not the scene.`);
+                throw new Error(`Camera is defined already but the scene isn't.`);
             }
             this.camera.aspect = newSize.w / newSize.h;
             this.camera.fov =

@@ -1,6 +1,6 @@
 import {assign, defineFunctionalElement, html, listen} from 'element-vir';
 import {css} from 'lit';
-import {ThreeJsAnimation} from '../../../shared-interfaces/threejs-animation';
+import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
 import {AnimationSpaPageElement} from '../../animation/basic-animation-spa-page.element';
 import {SingleColorCubeAnimation} from './single-color-cube.animation';
 

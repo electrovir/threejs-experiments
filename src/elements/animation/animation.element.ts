@@ -1,12 +1,8 @@
 import {defineFunctionalElement, ElementEvent, eventInit, html, listen} from 'element-vir';
 import {css, unsafeCSS} from 'lit';
-import {Size} from '../../shared-interfaces/size';
-import {
-    DestroyedEvent,
-    FpsEvent,
-    ThreeJsAnimation,
-} from '../../shared-interfaces/threejs-animation';
-import {createThrottle} from '../../throttle';
+import {Size} from '../../interfaces/size';
+import {DestroyedEvent, FpsEvent, ThreeJsAnimation} from '../../interfaces/threejs-animation';
+import {createThrottle} from '../../interfaces/throttle';
 import {ResizeCanvasElement} from './resize-canvas.element';
 
 export const AnimationElement = defineFunctionalElement({
