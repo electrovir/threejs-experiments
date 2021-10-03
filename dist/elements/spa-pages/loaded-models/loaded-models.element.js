@@ -36,6 +36,10 @@ export const LoadingModelElement = defineFunctionalElement({
         label {
             cursor: pointer;
         }
+
+        label input {
+            cursor: pointer;
+        }
     `,
   props: {
     animation: void 0,

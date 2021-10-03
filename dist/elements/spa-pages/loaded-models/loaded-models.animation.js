@@ -14,8 +14,8 @@ import {ThreeJsAnimation} from "../../../interfaces/threejs-animation.js";
 export var AvailableModels;
 (function(AvailableModels2) {
   AvailableModels2["Bottle"] = "bottle";
-  AvailableModels2["Sphere"] = "sphere";
   AvailableModels2["Cube"] = "cube";
+  AvailableModels2["Sphere"] = "sphere";
 })(AvailableModels || (AvailableModels = {}));
 function setMorphDirections(mesh) {
   if (mesh.morphTargetInfluences) {
@@ -177,6 +177,7 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
   }
   initScene(camera) {
     camera.position.set(0, 0, 6);
+    this.showModel(true, AvailableModels.Sphere);
     this.showModel(true, AvailableModels.Bottle);
     this.addLights(this.scene);
     return this.scene;
