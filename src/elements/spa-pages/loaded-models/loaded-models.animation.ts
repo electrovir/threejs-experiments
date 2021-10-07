@@ -16,6 +16,8 @@ import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {loadModel} from '../../../interfaces/model-loader';
 import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
 
+/** This ain't the prettiest code, but it works. */
+
 export enum AvailableModels {
     Bottle = 'bottle',
     Cube = 'cube',

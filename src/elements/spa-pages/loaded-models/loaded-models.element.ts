@@ -1,6 +1,6 @@
+import {getEnumTypedValues} from 'augment-vir';
 import {assign, assignWithCleanup, defineFunctionalElement, html, listen} from 'element-vir';
 import {css, unsafeCSS} from 'lit';
-import {getEnumTypedValues} from 'virmator/dist/augments/object';
 import {AnimationElement} from '../../animation/animation.element';
 import {
     AvailableModels,

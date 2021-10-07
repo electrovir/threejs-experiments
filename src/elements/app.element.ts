@@ -1,6 +1,6 @@
 import {defineFunctionalElement, html, listen} from 'element-vir';
 import {css, TemplateResult} from 'lit';
-import {SpaRoute} from '../router/spa-routes';
+import {ExperimentRoute} from '../threejs-experiments-router';
 import {AppNavElement} from './app-nav/app-nav.element';
 import {HomeElement} from './spa-pages/home/home.element';
 import {LoadingModelElement} from './spa-pages/loaded-models/loaded-models.element';
@@ -10,7 +10,7 @@ import {SingleColorCubeElement} from './spa-pages/single-color-cube/single-color
 export const ThreeJsExperimentsAppElement = defineFunctionalElement({
     tagName: 'vir-three-js-experiments-app',
     props: {
-        spaRoute: undefined as SpaRoute | undefined,
+        spaRoute: undefined as ExperimentRoute | undefined,
     },
     styles: css`
         :host {
@@ -52,16 +52,16 @@ export const ThreeJsExperimentsAppElement = defineFunctionalElement({
     },
 });
 
-function getMainPage(spaRoute?: SpaRoute): TemplateResult {
-    switch (spaRoute) {
+function getMainPage(route?: ExperimentRoute): TemplateResult {
+    switch (route) {
         case undefined:
-        case SpaRoute.Home:
+        case ExperimentRoute.Home:
             return html`<${HomeElement}></${HomeElement}>`;
-        case SpaRoute.SingleColorCube:
+        case ExperimentRoute.SingleColorCube:
             return html`<${SingleColorCubeElement}></${SingleColorCubeElement}>`;
-        case SpaRoute.RainbowCube:
+        case ExperimentRoute.RainbowCube:
             return html`<${RainbowCubeElement}></${RainbowCubeElement}>`;
-        case SpaRoute.LoadedModels:
+        case ExperimentRoute.LoadedModels:
             return html`<${LoadingModelElement}></${LoadingModelElement}>`;
     }
 }

@@ -22,14 +22,16 @@
         "test:full": "npm run spellcheck && virmator format check"
     },
     "dependencies": {
-        "@snowpack/plugin-typescript": "^1.2.1",
-        "element-vir": "^0.2.1",
+        "augment-vir": "^1.0.0",
+        "element-vir": "^2.0.0",
         "lit": "^2.0.0",
-        "snowpack": "^3.8.8",
-        "three": "^0.133.0"
+        "spa-router-vir": "^0.0.4",
+        "three": "^0.133.1"
     },
     "devDependencies": {
-        "@types/three": "^0.132.2",
-        "virmator": "^1.1.15"
+        "@snowpack/plugin-typescript": "^1.2.1",
+        "@types/three": "^0.133.0",
+        "snowpack": "^3.8.8",
+        "virmator": "^1.2.0"
     }
 }

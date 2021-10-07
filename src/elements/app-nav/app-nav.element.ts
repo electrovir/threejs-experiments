@@ -1,3 +1,4 @@
+import {getEnumTypedValues} from 'augment-vir';
 import {
     assign,
     defineFunctionalElement,
@@ -7,34 +8,13 @@ import {
     onDomCreated,
 } from 'element-vir';
 import {css} from 'lit';
-import {getEnumTypedValues, isEnumValue} from 'virmator/dist/augments/object';
-import {addRouteListener} from '../../router/route-listener';
-import {SpaRoute} from '../../router/spa-routes';
+import {RouteListener} from 'spa-router-vir';
+import {
+    ExperimentRoute,
+    threeJsExperimentsRouter,
+    ValidThreeJsRoutes,
+} from '../../threejs-experiments-router';
 import {AppRouteLinkElement} from './app-route-link.element';
-
-export class NavRouteUpdate extends CustomEvent<[SpaRoute]> {
-    public static eventName = 'nav-route-update';
-    constructor(detail: Readonly<ValidNavRoutes>) {
-        super(NavRouteUpdate.eventName, {detail: [...detail], bubbles: true, composed: true});
-    }
-}
-
-export type ValidNavRoutes = Readonly<[SpaRoute]>;
-
-const defaultRoute: ValidNavRoutes = [SpaRoute.Home];
-
-function sanitizeSpaRoutes(routes: Readonly<string[]>): Readonly<ValidNavRoutes> {
-    if (routes.length !== 1) {
-        return defaultRoute;
-    }
-    const firstRoute = routes[0];
-
-    if (isEnumValue(firstRoute, SpaRoute)) {
-        return [firstRoute];
-    } else {
-        return defaultRoute;
-    }
-}
 
 export const AppNavElement = defineFunctionalElement({
     tagName: 'vir-app-nav',
@@ -59,24 +39,24 @@ export const AppNavElement = defineFunctionalElement({
         }
     `,
     props: {
-        spaRoute: undefined as SpaRoute | undefined,
-        routeListener: undefined as undefined | (() => void),
+        currentRoutes: undefined as Readonly<ValidThreeJsRoutes> | undefined,
+        routeListener: undefined as undefined | RouteListener<ValidThreeJsRoutes>,
     },
     events: {
-        navUpdate: eventInit<ValidNavRoutes>(),
+        navUpdate: eventInit<Readonly<ValidThreeJsRoutes>>(),
     },
     renderCallback: ({props, events, dispatchEvent}) => {
         return html`
             <ul
                 ${onDomCreated(() => {
                     if (!props.routeListener) {
-                        props.routeListener = addRouteListener<ValidNavRoutes>(
+                        props.routeListener = threeJsExperimentsRouter.addRouteListener(
                             true,
-                            sanitizeSpaRoutes,
                             (routes) => {
                                 const rootRoute = routes[0];
-                                if (rootRoute !== props.spaRoute) {
-                                    props.spaRoute = rootRoute;
+                                const currentRoute = props.currentRoutes?.[0];
+                                if (rootRoute !== currentRoute) {
+                                    props.currentRoutes = routes;
                                     dispatchEvent(new ElementEvent(events.navUpdate, routes));
                                 }
                             },
@@ -84,12 +64,13 @@ export const AppNavElement = defineFunctionalElement({
                     }
                 })}
             >
-                ${getEnumTypedValues(SpaRoute).map((spaRoute) => {
+                ${getEnumTypedValues(ExperimentRoute).map((route) => {
                     return html`
                     <li>
-                        <${AppRouteLinkElement} ${assign(AppRouteLinkElement.props.routes, [
-                        spaRoute,
-                    ])}></${AppRouteLinkElement}>
+                        <${AppRouteLinkElement} ${assign(
+                        AppRouteLinkElement.props.route,
+                        route,
+                    )}></${AppRouteLinkElement}>
                     </li>
                 `;
                 })}
