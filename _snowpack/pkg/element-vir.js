@@ -328,13 +328,10 @@ const onResize = e$1(class extends i$1 {
     }
 });
 
-function deleteArrayIndexes(array, indexes) {
+function filterOutArrayIndexes(array, indexes) {
     return array.filter((_, index) => !indexes.includes(index));
 }
 
-function hasStaticTagName(currentValue) {
-    return typeof currentValue == 'function' && currentValue.hasOwnProperty('tagName');
-}
 function makeCheckTransform(name, check, transform) {
     return {
         name,
@@ -342,7 +339,75 @@ function makeCheckTransform(name, check, transform) {
         transform,
     };
 }
-const checksAndTransforms = [
+/**
+ * The transformed templates are written to a map so that we can preserve reference equality between
+ * calls. Without maintaining reference equality between html`` calls, lit-element reconstructs all
+ * of its children on every render.
+ *
+ * This is a WeakMap because we only care about the transformed array value as long as the original
+ * template array key exists.
+ */
+const transformedTemplateStrings = new WeakMap();
+function getTransformedTemplate(templateStringsKey, values, fallbackTransform) {
+    const alreadyTransformedTemplateStrings = transformedTemplateStrings.get(templateStringsKey);
+    const templateTransform = alreadyTransformedTemplateStrings !== null && alreadyTransformedTemplateStrings !== void 0 ? alreadyTransformedTemplateStrings : fallbackTransform();
+    if (!alreadyTransformedTemplateStrings) {
+        transformedTemplateStrings.set(templateStringsKey, templateTransform);
+    }
+    const transformedValuesArray = filterOutArrayIndexes(values, templateTransform.valueIndexDeletions);
+    return { strings: templateTransform.templateStrings, values: transformedValuesArray };
+}
+function transformTemplate(inputTemplateStrings, inputValues, checksAndTransforms, assertValidString) {
+    const newStrings = [];
+    const newRaws = [];
+    const valueDeletions = [];
+    inputTemplateStrings.forEach((currentTemplateString, index) => {
+        var _a;
+        const lastNewStringsIndex = newStrings.length - 1;
+        const lastNewString = newStrings[lastNewStringsIndex];
+        const currentValueIndex = index - 1;
+        const currentValue = inputValues[currentValueIndex];
+        let validTransform;
+        assertValidString && assertValidString(currentTemplateString);
+        if (typeof lastNewString === 'string') {
+            validTransform = (_a = checksAndTransforms.find((checkAndTransform) => {
+                return checkAndTransform.check(lastNewString, currentTemplateString, currentValue);
+            })) === null || _a === void 0 ? void 0 : _a.transform;
+            if (validTransform) {
+                newStrings[lastNewStringsIndex] =
+                    lastNewString + validTransform(currentValue) + currentTemplateString;
+                valueDeletions.push(currentValueIndex);
+            }
+        }
+        if (!validTransform) {
+            newStrings.push(currentTemplateString);
+        }
+        const currentRawLitString = inputTemplateStrings.raw[index];
+        if (validTransform) {
+            newRaws[lastNewStringsIndex] =
+                newRaws[lastNewStringsIndex] + validTransform(currentValue) + currentRawLitString;
+        }
+        else {
+            newRaws.push(currentRawLitString);
+        }
+    });
+    const newTemplateStrings = Object.assign([], newStrings, {
+        raw: newRaws,
+    });
+    return {
+        templateStrings: newTemplateStrings,
+        valueIndexDeletions: valueDeletions,
+    };
+}
+
+function hasStaticTagName(value) {
+    return (typeof value === 'function' &&
+        value.hasOwnProperty('tagName') &&
+        typeof value.tagName === 'string' &&
+        value.tagName.includes('-'));
+}
+
+const htmlChecksAndTransforms = [
     makeCheckTransform('tag name interpolation', (lastNewString, currentLitString, currentValue) => {
         const shouldHaveTagNameHere = (lastNewString.trim().endsWith('<') && !!currentLitString.match(/^[\s\n>]/)) ||
             ((lastNewString === null || lastNewString === void 0 ? void 0 : lastNewString.trim().endsWith('</')) && currentLitString.trim().startsWith('>'));
@@ -369,74 +434,23 @@ function isCustomElementTag(input) {
 }
 function stringValidator(input) {
     if (isCustomElementTag(input)) {
-        throw new Error(`Tags must be interpolated from their element class: ${input}`);
+        throw new Error(`Custom element tags must be interpolated from functional elements: ${input}`);
     }
 }
-function transformTemplate(litTemplate) {
-    const newStrings = [];
-    const newRaws = [];
-    const valueDeletions = [];
-    litTemplate.strings.forEach((currentLitString, index) => {
-        var _a;
-        const lastNewStringsIndex = newStrings.length - 1;
-        const lastNewString = newStrings[lastNewStringsIndex];
-        const currentValueIndex = index - 1;
-        const currentValue = litTemplate.values[currentValueIndex];
-        let validTransform;
-        stringValidator(currentLitString);
-        if (typeof lastNewString === 'string') {
-            validTransform = (_a = checksAndTransforms.find((checkAndTransform) => {
-                return checkAndTransform.check(lastNewString, currentLitString, currentValue);
-            })) === null || _a === void 0 ? void 0 : _a.transform;
-            if (validTransform) {
-                newStrings[lastNewStringsIndex] =
-                    lastNewString + validTransform(currentValue) + currentLitString;
-                valueDeletions.push(currentValueIndex);
-            }
-        }
-        if (!validTransform) {
-            newStrings.push(currentLitString);
-        }
-        const currentRawLitString = litTemplate.strings.raw[index];
-        if (validTransform) {
-            newRaws[lastNewStringsIndex] =
-                newRaws[lastNewStringsIndex] + validTransform(currentValue) + currentRawLitString;
-        }
-        else {
-            newRaws.push(currentRawLitString);
-        }
-    });
-    const newTemplateStrings = Object.assign([], newStrings, {
-        raw: newRaws,
-    });
-    return {
-        templateStrings: newTemplateStrings,
-        valueIndexDeletions: valueDeletions,
-    };
+function transformHtmlTemplate(litTemplate) {
+    return transformTemplate(litTemplate.strings, litTemplate.values, htmlChecksAndTransforms, stringValidator);
 }
 
-/**
- * The transformed templates are written to a map so that we can preserve reference equality between
- * calls. Without maintaining referenced equality between html`` calls, lit-element reconstructs all
- * of its children on every render.
- *
- * This is a WeakMap because we only care about the transformed array value as long as the original
- * template array key exists.
- */
-const transformedTemplateStrings = new WeakMap();
-/** Enables interpolation of events names */
+/** Enables interpolation of FunctionalElement tag names */
 function html(inputTemplateStrings, ...inputValues) {
     const litTemplate = y(inputTemplateStrings, ...inputValues);
-    const alreadyTransformedTemplateStrings = transformedTemplateStrings.get(inputTemplateStrings);
-    const templateTransform = alreadyTransformedTemplateStrings !== null && alreadyTransformedTemplateStrings !== void 0 ? alreadyTransformedTemplateStrings : transformTemplate(litTemplate);
-    if (!alreadyTransformedTemplateStrings) {
-        transformedTemplateStrings.set(inputTemplateStrings, templateTransform);
-    }
-    const transformedValuesArray = deleteArrayIndexes(litTemplate.values, templateTransform.valueIndexDeletions);
+    const transformedTemplate = getTransformedTemplate(inputTemplateStrings, inputValues, () => {
+        return transformHtmlTemplate(litTemplate);
+    });
     const htmlTemplate = {
         ...litTemplate,
-        strings: templateTransform.templateStrings,
-        values: transformedValuesArray,
+        strings: transformedTemplate.strings,
+        values: transformedTemplate.values,
     };
     return htmlTemplate;
 }

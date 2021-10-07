@@ -1,3 +1,4 @@
+import {getEnumTypedValues} from "../../../_snowpack/pkg/augment-vir.js";
 import {
   assign,
   defineFunctionalElement,
@@ -7,29 +8,11 @@ import {
   onDomCreated
 } from "../../../_snowpack/pkg/element-vir.js";
 import {css} from "../../../_snowpack/pkg/lit.js";
-import {getEnumTypedValues, isEnumValue} from "../../../_snowpack/pkg/virmator/dist/augments/object.js";
-import {addRouteListener} from "../../router/route-listener.js";
-import {SpaRoute} from "../../router/spa-routes.js";
+import {
+  ExperimentRoute,
+  threeJsExperimentsRouter
+} from "../../threejs-experiments-router.js";
 import {AppRouteLinkElement} from "./app-route-link.element.js";
-const _NavRouteUpdate = class extends CustomEvent {
-  constructor(detail) {
-    super(_NavRouteUpdate.eventName, {detail: [...detail], bubbles: true, composed: true});
-  }
-};
-export let NavRouteUpdate = _NavRouteUpdate;
-NavRouteUpdate.eventName = "nav-route-update";
-const defaultRoute = [SpaRoute.Home];
-function sanitizeSpaRoutes(routes) {
-  if (routes.length !== 1) {
-    return defaultRoute;
-  }
-  const firstRoute = routes[0];
-  if (isEnumValue(firstRoute, SpaRoute)) {
-    return [firstRoute];
-  } else {
-    return defaultRoute;
-  }
-}
 export const AppNavElement = defineFunctionalElement({
   tagName: "vir-app-nav",
   styles: css`
@@ -53,7 +36,7 @@ export const AppNavElement = defineFunctionalElement({
         }
     `,
   props: {
-    spaRoute: void 0,
+    currentRoutes: void 0,
     routeListener: void 0
   },
   events: {
@@ -64,22 +47,21 @@ export const AppNavElement = defineFunctionalElement({
             <ul
                 ${onDomCreated(() => {
       if (!props.routeListener) {
-        props.routeListener = addRouteListener(true, sanitizeSpaRoutes, (routes) => {
+        props.routeListener = threeJsExperimentsRouter.addRouteListener(true, (routes) => {
           const rootRoute = routes[0];
-          if (rootRoute !== props.spaRoute) {
-            props.spaRoute = rootRoute;
+          const currentRoute = props.currentRoutes?.[0];
+          if (rootRoute !== currentRoute) {
+            props.currentRoutes = routes;
             dispatchEvent(new ElementEvent(events.navUpdate, routes));
           }
         });
       }
     })}
             >
-                ${getEnumTypedValues(SpaRoute).map((spaRoute) => {
+                ${getEnumTypedValues(ExperimentRoute).map((route) => {
       return html`
                     <li>
-                        <${AppRouteLinkElement} ${assign(AppRouteLinkElement.props.routes, [
-        spaRoute
-      ])}></${AppRouteLinkElement}>
+                        <${AppRouteLinkElement} ${assign(AppRouteLinkElement.props.route, route)}></${AppRouteLinkElement}>
                     </li>
                 `;
     })}

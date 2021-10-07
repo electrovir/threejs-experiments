@@ -1,11 +1,6 @@
 import {defineFunctionalElement, html} from "../../../_snowpack/pkg/element-vir.js";
-import {createPathString, setRoutes} from "../../router/set-route.js";
-function routeClicked(clickEvent, routes) {
-  if (clickEvent.button === 0 && !(clickEvent.metaKey || clickEvent.altKey || clickEvent.ctrlKey || clickEvent.shiftKey)) {
-    clickEvent.preventDefault();
-    setRoutes(routes);
-  }
-}
+import {routeOnLinkClick} from "../../../_snowpack/pkg/spa-router-vir.js";
+import {ExperimentRoute, threeJsExperimentsRouter} from "../../threejs-experiments-router.js";
 function prettifyRouteName(input) {
   const spaces = input.replace(/-/g, " ");
   const words = spaces.split(" ");
@@ -14,19 +9,16 @@ function prettifyRouteName(input) {
 export const AppRouteLinkElement = defineFunctionalElement({
   tagName: "vir-app-route-link",
   props: {
-    routes: []
+    route: ExperimentRoute.Home
   },
   renderCallback: ({props}) => {
-    const definedRoutes = props.routes.filter((route) => !!route);
-    const lastRoute = definedRoutes[definedRoutes.length - 1];
-    if (!lastRoute) {
-      throw new Error(`Last defined route was not defined from ${JSON.stringify(props.routes)}`);
-    }
-    const label = lastRoute.length ? prettifyRouteName(lastRoute) : "Home";
+    const label = prettifyRouteName(props.route);
     const template = html`
             <a
-                href=${createPathString(definedRoutes)}
-                @click=${(clickEvent) => routeClicked(clickEvent, definedRoutes)}
+                href=${threeJsExperimentsRouter.createRoutesUrl([props.route])}
+                @click=${(clickEvent) => {
+      routeOnLinkClick(clickEvent, [props.route], threeJsExperimentsRouter);
+    }}
             >
                 ${label}
             </a>

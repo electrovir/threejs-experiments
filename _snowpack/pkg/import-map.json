@@ -1,10 +1,11 @@
 {
   "imports": {
+    "augment-vir": "./augment-vir.js",
     "element-vir": "./element-vir.js",
     "lit": "./lit.js",
     "lit/static-html.js": "./lit/static-html.js",
+    "spa-router-vir": "./spa-router-vir.js",
     "three": "./three.js",
-    "three/examples/jsm/loaders/GLTFLoader.js": "./three/examples/jsm/loaders/GLTFLoader.js",
-    "virmator/dist/augments/object": "./virmator/dist/augments/object.js"
+    "three/examples/jsm/loaders/GLTFLoader.js": "./three/examples/jsm/loaders/GLTFLoader.js"
   }
 }

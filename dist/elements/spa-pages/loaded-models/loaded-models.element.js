@@ -1,6 +1,6 @@
+import {getEnumTypedValues} from "../../../../_snowpack/pkg/augment-vir.js";
 import {assign, assignWithCleanup, defineFunctionalElement, html, listen} from "../../../../_snowpack/pkg/element-vir.js";
 import {css, unsafeCSS} from "../../../../_snowpack/pkg/lit.js";
-import {getEnumTypedValues} from "../../../../_snowpack/pkg/virmator/dist/augments/object.js";
 import {AnimationElement} from "../../animation/animation.element.js";
 import {
   AvailableModels,

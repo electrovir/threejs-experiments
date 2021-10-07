@@ -1,6 +1,6 @@
 import {defineFunctionalElement, html, listen} from "../../_snowpack/pkg/element-vir.js";
 import {css} from "../../_snowpack/pkg/lit.js";
-import {SpaRoute} from "../router/spa-routes.js";
+import {ExperimentRoute} from "../threejs-experiments-router.js";
 import {AppNavElement} from "./app-nav/app-nav.element.js";
 import {HomeElement} from "./spa-pages/home/home.element.js";
 import {LoadingModelElement} from "./spa-pages/loaded-models/loaded-models.element.js";
@@ -50,16 +50,16 @@ export const ThreeJsExperimentsAppElement = defineFunctionalElement({
             </main>`;
   }
 });
-function getMainPage(spaRoute) {
-  switch (spaRoute) {
+function getMainPage(route) {
+  switch (route) {
     case void 0:
-    case SpaRoute.Home:
+    case ExperimentRoute.Home:
       return html`<${HomeElement}></${HomeElement}>`;
-    case SpaRoute.SingleColorCube:
+    case ExperimentRoute.SingleColorCube:
       return html`<${SingleColorCubeElement}></${SingleColorCubeElement}>`;
-    case SpaRoute.RainbowCube:
+    case ExperimentRoute.RainbowCube:
       return html`<${RainbowCubeElement}></${RainbowCubeElement}>`;
-    case SpaRoute.LoadedModels:
+    case ExperimentRoute.LoadedModels:
       return html`<${LoadingModelElement}></${LoadingModelElement}>`;
   }
 }
