@@ -16,9 +16,12 @@ export const HomeElement = defineFunctionalElement({
                 to prevent GPU memory leaks. Animations are entirely destroyed upon switching
                 examples.
                 <br />
-                Uses my own custom web component library
+                Uses my own simple web component library
                 <!-- prettier-ignore -->
-                <a href="https://www.npmjs.com/package/element-vir">element-vir.</a>
+                <a href="https://www.npmjs.com/package/element-vir">element-vir</a>
+                and my own simple router for single page applications
+                <!-- prettier-ignore -->
+                <a href="https://www.npmjs.com/package/spa-router-vir">spa-router-vir.</a>
             </p>
             <a href="https://github.com/electrovir/threejs-experiments">Source code</a>
         `;
