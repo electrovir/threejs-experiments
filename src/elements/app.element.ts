@@ -1,6 +1,6 @@
 import {defineFunctionalElement, html, listen} from 'element-vir';
 import {css, TemplateResult} from 'lit';
-import {ExperimentRoute} from '../threejs-experiments-router';
+import {ExperimentsFullRoute, ExperimentsPage} from '../threejs-experiments-router';
 import {AppNavElement} from './app-nav/app-nav.element';
 import {HomeElement} from './spa-pages/home/home.element';
 import {LoadingModelElement} from './spa-pages/loaded-models/loaded-models.element';
@@ -10,7 +10,7 @@ import {SingleColorCubeElement} from './spa-pages/single-color-cube/single-color
 export const ThreeJsExperimentsAppElement = defineFunctionalElement({
     tagName: 'vir-three-js-experiments-app',
     props: {
-        spaRoute: undefined as ExperimentRoute | undefined,
+        spaRoute: undefined as ExperimentsFullRoute | undefined,
     },
     styles: css`
         :host {
@@ -42,7 +42,7 @@ export const ThreeJsExperimentsAppElement = defineFunctionalElement({
             <nav>
                 <${AppNavElement}
                     ${listen(AppNavElement.events.navUpdate, (event) => {
-                        props.spaRoute = event.detail[0];
+                        props.spaRoute = event.detail;
                     })}
                 ></${AppNavElement}>
             </nav>
@@ -52,16 +52,17 @@ export const ThreeJsExperimentsAppElement = defineFunctionalElement({
     },
 });
 
-function getMainPage(route?: ExperimentRoute): TemplateResult {
-    switch (route) {
+function getMainPage(route?: ExperimentsFullRoute): TemplateResult {
+    switch (route?.paths[0]) {
         case undefined:
-        case ExperimentRoute.Home:
+        // intentionally fall through to home
+        case ExperimentsPage.Home:
             return html`<${HomeElement}></${HomeElement}>`;
-        case ExperimentRoute.SingleColorCube:
+        case ExperimentsPage.SingleColorCube:
             return html`<${SingleColorCubeElement}></${SingleColorCubeElement}>`;
-        case ExperimentRoute.RainbowCube:
+        case ExperimentsPage.RainbowCube:
             return html`<${RainbowCubeElement}></${RainbowCubeElement}>`;
-        case ExperimentRoute.LoadedModels:
+        case ExperimentsPage.LoadedModels:
             return html`<${LoadingModelElement}></${LoadingModelElement}>`;
     }
 }

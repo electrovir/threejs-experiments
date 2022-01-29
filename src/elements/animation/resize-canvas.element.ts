@@ -1,7 +1,6 @@
 import {
+    defineElementEvent,
     defineFunctionalElement,
-    ElementEvent,
-    eventInit,
     html,
     onDomCreated,
     onResize,
@@ -44,18 +43,18 @@ export const ResizeCanvasElement = defineFunctionalElement({
         }
     `,
     events: {
-        canvasInit: eventInit<HTMLCanvasElement>(),
-        canvasResize: eventInit<Size>(),
+        canvasInit: defineElementEvent<HTMLCanvasElement>(),
+        canvasResize: defineElementEvent<Size>(),
     },
-    renderCallback: ({dispatchEvent, events}) => {
+    renderCallback: ({dispatch, events}) => {
         if (GlobalCanvas) {
-            dispatchEvent(new ElementEvent(events.canvasInit, GlobalCanvas));
+            dispatch(new events.canvasInit(GlobalCanvas));
         }
         return html`
             <div
                 ${onResize((updateEntry) => {
-                    dispatchEvent(
-                        new ElementEvent(events.canvasResize, {
+                    dispatch(
+                        new events.canvasResize({
                             w: updateEntry.contentRect.width,
                             h: updateEntry.contentRect.height,
                         }),
@@ -70,7 +69,7 @@ export const ResizeCanvasElement = defineFunctionalElement({
                               ${onDomCreated((element) => {
                                   if (element instanceof HTMLCanvasElement) {
                                       GlobalCanvas = element;
-                                      dispatchEvent(new ElementEvent(events.canvasInit, element));
+                                      dispatch(new events.canvasInit(element));
                                   } else {
                                       throw new Error(
                                           `Canvas DOM was created but didn't send back a canvas element.`,

@@ -1,9 +1,8 @@
 import {
     assign,
     assignWithCleanup,
+    defineElementEvent,
     defineFunctionalElement,
-    ElementEvent,
-    eventInit,
     html,
     listen,
 } from 'element-vir';
@@ -33,13 +32,13 @@ export const AnimationSpaPageElement = defineFunctionalElement({
         }
     `,
     events: {
-        fps: eventInit<number>(),
+        fps: defineElementEvent<number>(),
     },
     props: {
         animation: undefined as undefined | ThreeJsAnimation,
         animationEnabled: true,
     },
-    renderCallback: ({props, dispatchEvent, events}) => {
+    renderCallback: ({props, dispatch, events}) => {
         return html`<div class="slot-wrapper">
         <slot></slot>
     </div>
@@ -49,7 +48,7 @@ export const AnimationSpaPageElement = defineFunctionalElement({
             })}
             ${assign(AnimationElement.props.animationEnabled, props.animationEnabled)}
             ${listen(AnimationElement.events.fpsUpdate, (event) => {
-                dispatchEvent(new ElementEvent(events.fps, event.detail));
+                dispatch(new events.fps(event.detail));
             })}
         >
         </${AnimationElement}>

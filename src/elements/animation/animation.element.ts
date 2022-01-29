@@ -1,4 +1,4 @@
-import {defineFunctionalElement, ElementEvent, eventInit, html, listen} from 'element-vir';
+import {defineElementEvent, defineFunctionalElement, html, listen} from 'element-vir';
 import {css, unsafeCSS} from 'lit';
 import {Size} from '../../interfaces/size';
 import {DestroyedEvent, FpsEvent, ThreeJsAnimation} from '../../interfaces/threejs-animation';
@@ -18,7 +18,7 @@ export const AnimationElement = defineFunctionalElement({
         }
     `,
     events: {
-        fpsUpdate: eventInit<number>(),
+        fpsUpdate: defineElementEvent<number>(),
     },
     props: {
         animationEnabled: true,
@@ -27,7 +27,7 @@ export const AnimationElement = defineFunctionalElement({
         canvasSize: undefined as undefined | Size,
         resizeListener: undefined as undefined | ((size: Size) => void),
     },
-    renderCallback: ({props, dispatchEvent, events}) => {
+    renderCallback: ({props, dispatch, events}) => {
         if (props.animation) {
             if (!props.animation.isInitialized() && props.canvas) {
                 props.animation.init(
@@ -37,7 +37,7 @@ export const AnimationElement = defineFunctionalElement({
                     props.canvasSize,
                 );
                 props.animation.addEventListener(FpsEvent.eventName, (event) => {
-                    dispatchEvent(new ElementEvent(events.fpsUpdate, event.detail));
+                    dispatch(new events.fpsUpdate(event.detail));
                 });
                 props.resizeListener = createThrottle((size: Size) => {
                     props.animation?.updateSize(size);
