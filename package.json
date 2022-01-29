@@ -14,12 +14,12 @@
         "url": "https://github.com/electrovir"
     },
     "scripts": {
-        "build": "vite build --config ./src/vite/vite.config.ts && touch build/.nojekyll && cp build/index.html build/404.html",
+        "build": "rm -rf dist && vite build --config ./src/vite/vite-prod-config.ts && cp dist/index.html dist/404.html",
         "format": "virmator format write",
         "prepublishOnly": "npm run test:full",
-        "preview": "vite --config ./src/vite/vite.config.ts preview",
+        "preview": "npm run build && vite --config ./src/vite/vite-prod-config.ts preview --host",
         "spellcheck": "virmator spellcheck",
-        "start": "npm install && vite --force --config ./src/vite/vite.config.ts",
+        "start": "npm install && vite --force --config ./src/vite/vite-dev-config.ts",
         "test": "tsc --noEmit",
         "test:full": "npm test && npm run spellcheck && virmator format check"
     },
