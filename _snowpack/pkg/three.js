@@ -1,1 +1,0 @@
-export { A as AmbientLight, B as BoxGeometry, M as Mesh, a as MeshBasicMaterial, f as MeshPhysicalMaterial, b as MeshStandardMaterial, P as PerspectiveCamera, c as PointLight, S as Scene, d as SphereGeometry, e as SpotLight, W as WebGLRenderer } from './common/three.module-99ce1edf.js';
