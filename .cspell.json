@@ -1,5 +1,12 @@
 {
-    "ignorePaths": ["./dist/", "./public/models/"],
+    "ignorePaths": [
+        "./dist/",
+        "./public/models/"
+    ],
     "import": ".cspell-base.json",
-    "words": ["clearcoat", "globbing", "gltf", "stackoverflow", "vite"]
+    "words": [
+        "clearcoat",
+        "gltf",
+        "stackoverflow"
+    ]
 }

@@ -170,9 +170,29 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
         waterBottleSpotlight.target = await this.models[AvailableModels.Bottle];
         const lights = [
             new AmbientLight(0x404040),
-            lightWithPosition(0xffffff, 0.8, 20, 1, [-1, 1, 4]),
+            lightWithPosition(
+                0xffffff,
+                0.8,
+                20,
+                1,
+                [
+                    -1,
+                    1,
+                    4,
+                ],
+            ),
             // lightWithPosition(0xffffff, 1, 20, 1, [1, 0, -3]),
-            lightWithPosition(0xffffff, 1, 10, 1, [3, 4, -4]),
+            lightWithPosition(
+                0xffffff,
+                1,
+                10,
+                1,
+                [
+                    3,
+                    4,
+                    -4,
+                ],
+            ),
             waterBottleSpotlight,
         ];
         lights.forEach((light) => scene.add(light));

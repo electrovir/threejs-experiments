@@ -28,7 +28,11 @@ export class RainbowCubeAnimation extends ThreeJsAnimation {
         const pointLightAbove = new PointLight(0xffffff, 1, 10);
         pointLightAbove.position.set(-0.5, 1, 1);
 
-        const lights = [new AmbientLight(0x404040), pointLightAbove, pointLightRight];
+        const lights = [
+            new AmbientLight(0x404040),
+            pointLightAbove,
+            pointLightRight,
+        ];
         lights.forEach((light) => scene.add(light));
     }
 
