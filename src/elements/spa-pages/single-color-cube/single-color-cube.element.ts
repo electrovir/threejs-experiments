@@ -25,17 +25,16 @@ export const SingleColorCubeElement = defineFunctionalElement({
         animationEnabled: true,
         currentFps: 0,
     },
-    renderCallback: ({props}) => {
-        if (!props.animation) {
-            props.animation = new SingleColorCubeAnimation(0x00ff00);
-        }
+    initCallback: ({setProps}) => {
+        setProps({animation: new SingleColorCubeAnimation(0x00ff00)});
+    },
+    renderCallback: ({props, setProps}) => {
         return html`
         <${AnimationSpaPageElement}
             ${assign(AnimationSpaPageElement.props.animationEnabled, props.animationEnabled)}
             ${assign(AnimationSpaPageElement.props.animation, props.animation)}
-            ${listen(
-                AnimationSpaPageElement.events.fps,
-                (event) => (props.currentFps = event.detail),
+            ${listen(AnimationSpaPageElement.events.fps, (event) =>
+                setProps({currentFps: event.detail}),
             )}
         >
             <h1>Single Color Cube</h1>
@@ -56,7 +55,7 @@ export const SingleColorCubeElement = defineFunctionalElement({
                 <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
                 <br>
                 <button @click=${() => {
-                    props.animation = new SingleColorCubeAnimation(0x00ff00);
+                    setProps({animation: new SingleColorCubeAnimation(0x00ff00)});
                 }}>reset</button>
                 <br>
                 FPS: ${props.currentFps.toFixed(1)}

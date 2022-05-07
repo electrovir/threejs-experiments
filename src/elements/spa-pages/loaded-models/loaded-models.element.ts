@@ -50,19 +50,21 @@ export const LoadingModelElement = defineFunctionalElement({
         currentFps: 0,
         modelsShowing: {} as Partial<Record<AvailableModels, boolean>>,
     },
-    renderCallback: ({props}) => {
-        if (!props.animation) {
-            props.animation = new LoadingModelsAnimation();
-            props.animation.addEventListener(
-                ModelToggledEvent.eventName,
-                (event: ModelToggledEvent) => {
-                    props.modelsShowing = {
+    initCallback: ({setProps, props}) => {
+        setProps({animation: new LoadingModelsAnimation()});
+        props.animation?.addEventListener(
+            ModelToggledEvent.eventName,
+            (event: ModelToggledEvent) => {
+                setProps({
+                    modelsShowing: {
                         ...props.modelsShowing,
                         [event.detail.model]: event.detail.showing,
-                    };
-                },
-            );
-        }
+                    },
+                });
+            },
+        );
+    },
+    renderCallback: ({props, setProps}) => {
         return html`
         <h1>Loaded Models</h1>
         <p>
@@ -97,7 +99,7 @@ export const LoadingModelElement = defineFunctionalElement({
             })}
             ${assign(AnimationElement.props.animationEnabled, props.animationEnabled)}
             ${listen(AnimationElement.events.fpsUpdate, (event) => {
-                props.currentFps = event.detail;
+                setProps({currentFps: event.detail});
             })}
         >
         </${AnimationElement}>

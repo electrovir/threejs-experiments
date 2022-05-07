@@ -40,22 +40,24 @@ export const AppNavElement = defineFunctionalElement({
     events: {
         navUpdate: defineElementEvent<ExperimentsFullRoute>(),
     },
-    renderCallback: ({props, events, dispatch}) => {
+    renderCallback: ({props, events, dispatch, setProps}) => {
         return html`
             <ul
                 ${onDomCreated(() => {
                     if (!props.routeListener) {
-                        props.routeListener = threeJsExperimentsRouter.addRouteListener(
-                            true,
-                            (route) => {
-                                const rootRoute = route.paths[0];
-                                const currentRoute = props.currentRoute?.paths[0];
-                                if (rootRoute !== currentRoute) {
-                                    props.currentRoute = route;
-                                    dispatch(new events.navUpdate(route));
-                                }
-                            },
-                        );
+                        setProps({
+                            routeListener: threeJsExperimentsRouter.addRouteListener(
+                                true,
+                                (route) => {
+                                    const rootRoute = route.paths[0];
+                                    const currentRoute = props.currentRoute?.paths[0];
+                                    if (rootRoute !== currentRoute) {
+                                        setProps({currentRoute: route});
+                                        dispatch(new events.navUpdate(route));
+                                    }
+                                },
+                            ),
+                        });
                     }
                 })}
             >

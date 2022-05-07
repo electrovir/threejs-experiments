@@ -27,7 +27,7 @@ export const AnimationElement = defineFunctionalElement({
         canvasSize: undefined as undefined | Size,
         resizeListener: undefined as undefined | ((size: Size) => void),
     },
-    renderCallback: ({props, dispatch, events}) => {
+    renderCallback: ({props, dispatch, events, setProps}) => {
         if (props.animation) {
             if (!props.animation.isInitialized() && props.canvas) {
                 props.animation.init(
@@ -39,12 +39,13 @@ export const AnimationElement = defineFunctionalElement({
                 props.animation.addEventListener(FpsEvent.eventName, (event) => {
                     dispatch(new events.fpsUpdate(event.detail));
                 });
-                props.resizeListener = createThrottle((size: Size) => {
-                    props.animation?.updateSize(size);
-                }, 250);
-                props.animation.addEventListener(
-                    DestroyedEvent.eventName,
-                    () => (props.animation = undefined),
+                setProps({
+                    resizeListener: createThrottle((size: Size) => {
+                        props.animation?.updateSize(size);
+                    }, 250),
+                });
+                props.animation.addEventListener(DestroyedEvent.eventName, () =>
+                    setProps({animation: undefined}),
                 );
             }
             if (props.animation.isInitialized()) {
@@ -55,11 +56,11 @@ export const AnimationElement = defineFunctionalElement({
         return html`
             <${ResizeCanvasElement}
                     ${listen(ResizeCanvasElement.events.canvasInit, (event) => {
-                        props.canvas = event.detail;
+                        setProps({canvas: event.detail});
                     })}
                     ${listen(ResizeCanvasElement.events.canvasResize, (event) => {
                         props.resizeListener?.(event.detail);
-                        props.canvasSize = event.detail;
+                        setProps({canvasSize: event.detail});
                     })}
             ></${ResizeCanvasElement}>
         `;
