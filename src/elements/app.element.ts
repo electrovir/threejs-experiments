@@ -39,6 +39,7 @@ export const ThreeJsExperimentsAppElement = defineFunctionalElement({
     `,
     renderCallback: ({props, setProps}) => {
         return html`
+            hello there
             <nav>
                 <${AppNavElement}
                     ${listen(AppNavElement.events.navUpdate, (event) => {
