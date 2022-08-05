@@ -38,6 +38,13 @@ export const ThreeJsExperimentsAppElement = defineFunctionalElement({
         }
     `,
     renderCallback: ({props, setProps}) => {
+        const a = 'derp';
+        const b = 'another-thing';
+
+        if (a === a) {
+            console.log('hello');
+        }
+
         return html`
             hello there
             <nav>
