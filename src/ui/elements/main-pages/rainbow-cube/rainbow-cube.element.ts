@@ -1,7 +1,7 @@
 import {assign, defineFunctionalElement, html, listen} from 'element-vir';
 import {css} from 'lit';
-import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
-import {AnimationSpaPageElement} from '../../animation/basic-animation-spa-page.element';
+import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
+import {AnimationSpaPageElement} from '../../animation/vir-animation-page.element';
 import {RainbowCubeAnimation} from './rainbow-cube.animation';
 
 export const RainbowCubeElement = defineFunctionalElement({

@@ -1,4 +1,4 @@
-import {isEnumValue} from 'augment-vir';
+import {isEnumValue} from '@augment-vir/common';
 import {createSpaRouter, SpaRouter} from 'spa-router-vir';
 import {FullRoute} from '../node_modules/spa-router-vir/dist/router/full-route';
 

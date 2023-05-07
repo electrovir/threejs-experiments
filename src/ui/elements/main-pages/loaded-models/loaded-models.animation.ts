@@ -13,8 +13,8 @@ import {
     WebGLRenderer,
 } from 'three';
 import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
-import {loadModel} from '../../../interfaces/model-loader';
-import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
+import {loadModel} from '../../../../interfaces/model-loader';
+import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
 
 /** This ain't the prettiest code, but it works. */
 
@@ -211,7 +211,7 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
         }
     }
 
-    protected scene = new Scene();
+    protected override scene = new Scene();
     private loader = new GLTFLoader();
 
     private async loadModel(modelKey: AvailableModels) {
@@ -241,7 +241,7 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
 
     private insertedModels: Partial<Record<AvailableModels, Object3D>> = {};
 
-    protected initScene(camera: Camera) {
+    protected override initScene(camera: Camera) {
         camera.position.set(0, 0, 6);
 
         this.showModel(true, AvailableModels.Sphere);
@@ -250,7 +250,7 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
         return this.scene;
     }
 
-    protected animate(
+    protected override animate(
         frameTime: number,
         webGlRenderer: WebGLRenderer,
         camera: Camera,

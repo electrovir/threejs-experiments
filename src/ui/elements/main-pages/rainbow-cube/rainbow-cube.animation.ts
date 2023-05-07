@@ -9,7 +9,7 @@ import {
     Scene,
     WebGLRenderer,
 } from 'three';
-import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
+import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
 
 export class RainbowCubeAnimation extends ThreeJsAnimation {
     constructor(private readonly cubeColor = 0xff0000, private readonly cubeSize = 1) {

@@ -1,8 +1,7 @@
-import {defineFunctionalElement} from 'element-vir';
-import {css} from 'lit';
+import {css, defineElementNoInputs} from 'element-vir';
 import {html} from 'lit/static-html.js';
 
-export const HomeElement = defineFunctionalElement({
+export const VirHome = defineElementNoInputs({
     tagName: 'vir-home',
     styles: css`
         :host {

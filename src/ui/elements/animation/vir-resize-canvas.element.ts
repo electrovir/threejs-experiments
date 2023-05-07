@@ -1,17 +1,17 @@
 import {
+    css,
     defineElementEvent,
-    defineFunctionalElement,
+    defineElementNoInputs,
     html,
     onDomCreated,
     onResize,
 } from 'element-vir';
-import {css} from 'lit';
-import {Size} from '../../interfaces/size';
+import {Size} from '../../../interfaces/size';
 
 // store the canvas in a single place so we don't create multiple contexts
 let GlobalCanvas: undefined | HTMLCanvasElement = undefined;
 
-export const ResizeCanvasElement = defineFunctionalElement({
+export const VirResizeCanvas = defineElementNoInputs({
     tagName: 'vir-resize-canvas',
     styles: css`
         :host {
@@ -68,7 +68,7 @@ export const ResizeCanvasElement = defineFunctionalElement({
                           <canvas
                               ${onDomCreated((element) => {
                                   if (element instanceof HTMLCanvasElement) {
-                                      GlobalCanvas = element;
+                                      //   GlobalCanvas = element;
                                       dispatch(new events.canvasInit(element));
                                   } else {
                                       throw new Error(

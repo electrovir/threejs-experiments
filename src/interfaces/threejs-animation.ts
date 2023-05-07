@@ -56,20 +56,24 @@ export class ThreeJsAnimation extends EventTarget {
     private destroyWebGlRenderer() {
         if (this.webGlRenderer) {
             this.webGlRenderer.renderLists.dispose();
-            this.webGlRenderer?.clear();
+            this.webGlRenderer.clear();
             this.webGlRenderer.state.reset();
             // this doesn't actually work. It fails in Safari, Chrome, and Firefox.
             // this.webGlRenderer.forceContextLoss();
-            delete (this.webGlRenderer as Partial<WebGLRenderer>).context;
+            delete (this.webGlRenderer as Partial<WebGLRenderer>).domElement;
+            delete (this.webGlRenderer as any).context;
             this.webGlRenderer.dispose();
         }
         this.webGlRenderer = undefined;
     }
 
     private destroyScene() {
-        // wipe out the rendered scene to just black pixels
-        this.scene?.clear();
-        this.scene = undefined;
+        if (this.scene) {
+            // wipe out the rendered scene to just black pixels
+            this.scene.clear();
+            this.scene.removeFromParent();
+            this.scene = undefined;
+        }
     }
 
     /**
@@ -79,7 +83,6 @@ export class ThreeJsAnimation extends EventTarget {
      * works please tell me!)
      */
     public destroy() {
-        this.dispatchEvent(new DestroyedEvent());
         this.animationEnabled = false;
         this.isDestroyed = true;
         this.animate = () => false;
@@ -90,6 +93,7 @@ export class ThreeJsAnimation extends EventTarget {
         this.starterCameraDimensions = undefined;
         this.lastRenderTime = 0;
         this.lastFpsEmitTime = 0;
+        this.dispatchEvent(new DestroyedEvent());
     }
 
     public init(
@@ -115,7 +119,7 @@ export class ThreeJsAnimation extends EventTarget {
         return !!(this.canvas && this.camera && this.scene && this.webGlRenderer);
     }
 
-    public addEventListener<EventType extends string>(
+    public override addEventListener<EventType extends string>(
         type: EventType,
         callback: EventType extends typeof FpsEvent.eventName
             ? (event: FpsEvent) => void
