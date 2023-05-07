@@ -1,12 +1,15 @@
 {
+    "extends": "virmator/base-configs/base-tsconfig.json",
     "compilerOptions": {
-        // needed for lit-element decorators
-        "experimentalDecorators": true,
-        "moduleResolution": "node",
-        // snowpack takes care of emitting
-        "noEmit": true,
-        // override keyword doesn't work with snowpack
-        "noImplicitOverride": false
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "module": "ES2020"
     },
-    "extends": "./tsconfig-base.json"
+    "exclude": [
+        "./configs",
+        "./coverage",
+        "./dist",
+        "./node_modules",
+        "./test-files"
+    ]
 }

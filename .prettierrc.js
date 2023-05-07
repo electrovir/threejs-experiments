@@ -7,6 +7,7 @@ const plugins = [
     'prettier-plugin-multiline-arrays',
     'prettier-plugin-organize-imports',
     'prettier-plugin-jsdoc',
+    'prettier-plugin-interpolated-html-tags',
 ].map((pluginName) => {
     // account for installations where deps are flattened and installations where they're nested
     const defaultPath = `./node_modules/${pluginName}`;
