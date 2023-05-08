@@ -34,7 +34,7 @@ export const VirLoadingModel = defineElementNoInputs({
         currentFps: 0,
         modelsShowing: {} as Partial<Record<AvailableModels, boolean>>,
     },
-    initCallback: ({updateState, state}) => {
+    renderCallback: ({state, updateState}) => {
         if (!state.animation) {
             const newAnimation = new LoadingModelsAnimation();
             updateState({animation: newAnimation});
@@ -50,8 +50,6 @@ export const VirLoadingModel = defineElementNoInputs({
                 },
             );
         }
-    },
-    renderCallback: ({state, updateState}) => {
         return html`
             <${AnimationPage}
                 ${assign(AnimationPage, {

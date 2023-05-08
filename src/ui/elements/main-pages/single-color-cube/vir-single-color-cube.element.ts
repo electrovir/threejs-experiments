@@ -24,22 +24,19 @@ export const VirSingleColorCube = defineElementNoInputs({
         animationEnabled: true,
         currentFps: 0,
     },
-    initCallback({updateState, state}) {
-        console.log('init cube');
-        // if (!state.animation) {
-        //     updateState({animation: new SingleColorCubeAnimation(0x00ff00)});
-        // }
-    },
-    renderCallback({state, updateState}) {
+    renderCallback({state, updateState, host}) {
+        if (!state.animation) {
+            updateState({animation: new SingleColorCubeAnimation(0x00ff00)});
+        }
         return html`
             <${AnimationPage}
                 ${assign(AnimationPage, {
                     animationEnabled: state.animationEnabled,
                     animation: state.animation,
                 })}
-                ${listen(AnimationPage.events.fps, (event) =>
-                    updateState({currentFps: event.detail}),
-                )}
+                ${listen(AnimationPage.events.fps, (event) => {
+                    updateState({currentFps: event.detail});
+                })}
             >
                 <h1>Single Color Cube</h1>
                 <p>

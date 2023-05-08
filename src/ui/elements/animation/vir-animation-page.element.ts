@@ -1,4 +1,12 @@
-import {assign, css, defineElement, defineElementEvent, html, listen, unsafeCSS} from 'element-vir';
+import {
+    assignWithCleanup,
+    css,
+    defineElement,
+    defineElementEvent,
+    html,
+    listen,
+    unsafeCSS,
+} from 'element-vir';
 import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
 import {VirAnimation} from './vir-animation.element';
 
@@ -29,8 +37,8 @@ export const AnimationPage = defineElement<{
     events: {
         fps: defineElementEvent<number>(),
     },
-    initCallback({host}) {
-        console.log('init vir-animation-page');
+    cleanupCallback({inputs}) {
+        inputs.animation?.destroy();
     },
     renderCallback: ({inputs, dispatch, events}) => {
         return html`
@@ -38,15 +46,20 @@ export const AnimationPage = defineElement<{
                 <slot></slot>
             </div>
             <${VirAnimation}
-                ${assign(VirAnimation, {
-                    animation: inputs.animation,
-                    animationEnabled: inputs.animationEnabled,
-                })}
+                ${assignWithCleanup(
+                    VirAnimation,
+                    {
+                        animation: inputs.animation,
+                        animationEnabled: inputs.animationEnabled,
+                    },
+                    (oldValue) => {
+                        if (oldValue.animation !== inputs.animation) {
+                            oldValue.animation?.destroy();
+                        }
+                    },
+                )}
                 ${listen(VirAnimation.events.fpsUpdate, (event) => {
                     dispatch(new events.fps(event.detail));
-                })}
-                ${listen(VirAnimation.events.canvasDestroyed, (event) => {
-                    // inputs.animation?.destroy();
                 })}
             ></${VirAnimation}>
         `;

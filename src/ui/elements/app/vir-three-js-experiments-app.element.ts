@@ -43,8 +43,6 @@ export const ThreeJsExperimentsAppElement = defineElementNoInputs({
             <${currentElement}></${currentElement}>
         `;
 
-        console.log({currentElement: currentElement.tagName});
-
         return html`
             <nav>
                 <${VirAppNav}

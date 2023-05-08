@@ -1,3 +1,4 @@
+import {AnyFunction, getOrSetFromMap, isObject} from '@augment-vir/common';
 import {Camera, PerspectiveCamera, Scene, WebGLRenderer} from 'three';
 import {Size} from './size';
 
@@ -8,14 +9,6 @@ export class FpsEvent extends CustomEvent<number> {
 
     constructor(fps: number) {
         super(FpsEvent.eventName, {detail: fps, bubbles: true, composed: true});
-    }
-}
-
-export class DestroyedEvent extends CustomEvent<never> {
-    static readonly eventName = 'animationDestroyed';
-
-    constructor() {
-        super(DestroyedEvent.eventName, {bubbles: true, composed: true});
     }
 }
 
@@ -38,6 +31,10 @@ export class ThreeJsAnimation extends EventTarget {
     }
     // ==============================================
 
+    private listeners = new Map<
+        string,
+        Map<boolean, Map<AnyFunction, (AddEventListenerOptions | boolean | undefined)[]>>
+    >();
     private camera: PerspectiveCamera | undefined;
     private canvas: HTMLCanvasElement | undefined;
     protected scene: Scene | undefined;
@@ -51,7 +48,7 @@ export class ThreeJsAnimation extends EventTarget {
 
     private animationEnabled = false;
     private fpsEmitDelay = 500;
-    private isDestroyed = false;
+    public isDestroyed = false;
 
     private destroyWebGlRenderer() {
         if (this.webGlRenderer) {
@@ -83,6 +80,7 @@ export class ThreeJsAnimation extends EventTarget {
      * works please tell me!)
      */
     public destroy() {
+        this.removeAllEventListeners();
         this.animationEnabled = false;
         this.isDestroyed = true;
         this.animate = () => false;
@@ -93,7 +91,6 @@ export class ThreeJsAnimation extends EventTarget {
         this.starterCameraDimensions = undefined;
         this.lastRenderTime = 0;
         this.lastFpsEmitTime = 0;
-        this.dispatchEvent(new DestroyedEvent());
     }
 
     public init(
@@ -123,14 +120,96 @@ export class ThreeJsAnimation extends EventTarget {
         type: EventType,
         callback: EventType extends typeof FpsEvent.eventName
             ? (event: FpsEvent) => void
-            : EventType extends typeof DestroyedEvent.eventName
-            ? (event: DestroyedEvent) => void
             : (event: any) => void,
         options?: AddEventListenerOptions | boolean,
     ): typeof callback {
         super.addEventListener(type, callback, options);
 
+        const captureMap = getOrSetFromMap(this.listeners, type, () => {
+            return new Map<
+                boolean,
+                Map<AnyFunction, (AddEventListenerOptions | boolean | undefined)[]>
+            >();
+        });
+        const functionMap = getOrSetFromMap(captureMap, this.isCapturing(options), () => {
+            return new Map<AnyFunction, (AddEventListenerOptions | boolean | undefined)[]>();
+        });
+        const optionsArray = getOrSetFromMap(functionMap, callback, () => {
+            return [];
+        });
+        optionsArray.push(options);
         return callback;
+    }
+
+    private isCapturing(options?: AddEventListenerOptions | boolean): boolean {
+        return typeof options === 'boolean'
+            ? options
+            : typeof options === 'undefined'
+            ? false
+            : !!options.capture;
+    }
+
+    public override removeEventListener<EventType extends string>(
+        type: EventType,
+        callback: EventType extends typeof FpsEvent.eventName
+            ? (event: FpsEvent) => void
+            : (event: any) => void,
+        options?: AddEventListenerOptions | boolean,
+    ): boolean {
+        super.removeEventListener(type, callback, options);
+
+        const captureMap = this.listeners.get(type);
+        if (captureMap) {
+            const functionMap = captureMap.get(this.isCapturing(options));
+            if (functionMap) {
+                const optionsArray = functionMap.get(callback);
+                if (optionsArray) {
+                    functionMap.set(
+                        callback,
+                        optionsArray.filter((option) => {
+                            if (typeof option !== typeof options) {
+                                return true;
+                            }
+
+                            if (isObject(options) && isObject(option)) {
+                                return !(
+                                    options.capture === option.capture &&
+                                    options.once === option.once &&
+                                    options.passive === option.passive
+                                );
+                            }
+
+                            // covers undefined and boolean values
+                            return option !== options;
+                        }),
+                    );
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public removeAllEventListeners() {
+        Array.from(this.listeners.entries()).forEach(
+            ([
+                eventType,
+                captureMap,
+            ]) => {
+                Array.from(captureMap.values()).forEach((functionMap) => {
+                    Array.from(functionMap.entries()).forEach(
+                        ([
+                            callback,
+                            optionsArray,
+                        ]) => {
+                            optionsArray.forEach((option) => {
+                                this.removeEventListener(eventType, callback, option);
+                            });
+                        },
+                    );
+                });
+            },
+        );
     }
 
     public enableAnimation(value: boolean) {

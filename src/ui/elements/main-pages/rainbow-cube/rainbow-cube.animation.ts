@@ -36,7 +36,7 @@ export class RainbowCubeAnimation extends ThreeJsAnimation {
         lights.forEach((light) => scene.add(light));
     }
 
-    protected initScene() {
+    protected override initScene() {
         const scene = new Scene();
         // this.cube.position.set(this.cubeSize + 1, this.cubeSize / 2, 0);
         this.cube.material.clearcoat = 0.5;
@@ -46,7 +46,7 @@ export class RainbowCubeAnimation extends ThreeJsAnimation {
     }
     private frameCount = 0;
 
-    protected animate(
+    protected override animate(
         frameTime: number,
         webGlRenderer: WebGLRenderer,
         camera: Camera,
