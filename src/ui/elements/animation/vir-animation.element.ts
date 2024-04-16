@@ -1,8 +1,7 @@
-import {defineElement, defineElementEvent, html, listen} from 'element-vir';
-import {css, unsafeCSS} from 'lit';
-import {Size} from '../../../interfaces/size';
-import {FpsEvent, ThreeJsAnimation} from '../../../interfaces/threejs-animation';
-import {createThrottle} from '../../../interfaces/throttle';
+import {Dimensions} from '@augment-vir/common';
+import {css, defineElement, defineElementEvent, html, listen, unsafeCSS} from 'element-vir';
+import {FpsEvent, ThreeJsAnimation} from '../../../services/threejs-animation';
+import {createThrottle} from '../../../services/throttle';
 import {VirResizeCanvas} from './vir-resize-canvas.element';
 
 export const VirAnimation = defineElement<{
@@ -23,10 +22,10 @@ export const VirAnimation = defineElement<{
     events: {
         fpsUpdate: defineElementEvent<number>(),
     },
-    stateInit: {
+    stateInitStatic: {
         canvas: undefined as undefined | HTMLCanvasElement,
-        canvasSize: undefined as undefined | Size,
-        resizeListener: undefined as undefined | ((size: Size) => void),
+        canvasSize: undefined as undefined | Dimensions,
+        resizeListener: undefined as undefined | ((size: Dimensions) => void),
     },
     renderCallback: ({state, inputs, dispatch, events, updateState}) => {
         if (inputs.animation) {
@@ -37,11 +36,11 @@ export const VirAnimation = defineElement<{
                     undefined,
                     state.canvasSize,
                 );
-                inputs.animation.addEventListener(FpsEvent.eventName, (event) => {
+                inputs.animation.listen(FpsEvent, (event) => {
                     dispatch(new events.fpsUpdate(event.detail));
                 });
                 updateState({
-                    resizeListener: createThrottle((size: Size) => {
+                    resizeListener: createThrottle((size: Dimensions) => {
                         inputs.animation?.updateSize(size);
                     }, 250),
                 });

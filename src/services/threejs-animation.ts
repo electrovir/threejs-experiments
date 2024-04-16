@@ -1,40 +1,29 @@
-import {AnyFunction, getOrSetFromMap, isObject} from '@augment-vir/common';
+import {Dimensions} from '@augment-vir/common';
 import {Camera, PerspectiveCamera, Scene, WebGLRenderer} from 'three';
-import {Size} from './size';
+import {ListenTarget, defineTypedCustomEvent} from 'typed-event-target';
+import {ModelToggle} from './models';
 
 // resize help from https://jsfiddle.net/Q4Jpu/
 
-export class FpsEvent extends CustomEvent<number> {
-    static readonly eventName = 'fpsCount';
+export class FpsEvent extends defineTypedCustomEvent<number>()('fps-count') {}
 
-    constructor(fps: number) {
-        super(FpsEvent.eventName, {detail: fps, bubbles: true, composed: true});
-    }
-}
+export class ModelToggleEvent extends defineTypedCustomEvent<ModelToggle>()('model-toggle') {}
 
-export class ThreeJsAnimation extends EventTarget {
+export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelToggleEvent> {
     // ==============================================
     //                override these
     // ==============================================
     /** Method that is called each frame to run the animation. */
-    protected animate(
+    protected abstract animate(
         frameTime: number,
         webGlRenderer: WebGLRenderer,
         camera: Camera,
         scene: Scene,
-    ): boolean {
-        return false;
-    }
+    ): boolean;
     /** Method that is called once to initialize the ThreeJS scene. */
-    protected initScene(camera: Camera): Scene {
-        return new Scene();
-    }
+    protected abstract initScene(camera: Camera): Scene;
     // ==============================================
 
-    private listeners = new Map<
-        string,
-        Map<boolean, Map<AnyFunction, (AddEventListenerOptions | boolean | undefined)[]>>
-    >();
     private camera: PerspectiveCamera | undefined;
     private canvas: HTMLCanvasElement | undefined;
     protected scene: Scene | undefined;
@@ -79,8 +68,7 @@ export class ThreeJsAnimation extends EventTarget {
      * that. None of suggested answers (when there actually are any) work. (If you find a way that
      * works please tell me!)
      */
-    public destroy() {
-        this.removeAllEventListeners();
+    public override destroy() {
         this.animationEnabled = false;
         this.isDestroyed = true;
         this.animate = () => false;
@@ -91,13 +79,14 @@ export class ThreeJsAnimation extends EventTarget {
         this.starterCameraDimensions = undefined;
         this.lastRenderTime = 0;
         this.lastFpsEmitTime = 0;
+        super.destroy();
     }
 
     public init(
         canvas: HTMLCanvasElement,
         startAnimating: boolean,
         fpsEmitDelay = 500,
-        size?: Size,
+        size?: Dimensions,
     ) {
         if (this.isDestroyed) {
             console.error(this);
@@ -116,102 +105,6 @@ export class ThreeJsAnimation extends EventTarget {
         return !!(this.canvas && this.camera && this.scene && this.webGlRenderer);
     }
 
-    public override addEventListener<EventType extends string>(
-        type: EventType,
-        callback: EventType extends typeof FpsEvent.eventName
-            ? (event: FpsEvent) => void
-            : (event: any) => void,
-        options?: AddEventListenerOptions | boolean,
-    ): typeof callback {
-        super.addEventListener(type, callback, options);
-
-        const captureMap = getOrSetFromMap(this.listeners, type, () => {
-            return new Map<
-                boolean,
-                Map<AnyFunction, (AddEventListenerOptions | boolean | undefined)[]>
-            >();
-        });
-        const functionMap = getOrSetFromMap(captureMap, this.isCapturing(options), () => {
-            return new Map<AnyFunction, (AddEventListenerOptions | boolean | undefined)[]>();
-        });
-        const optionsArray = getOrSetFromMap(functionMap, callback, () => {
-            return [];
-        });
-        optionsArray.push(options);
-        return callback;
-    }
-
-    private isCapturing(options?: AddEventListenerOptions | boolean): boolean {
-        return typeof options === 'boolean'
-            ? options
-            : typeof options === 'undefined'
-            ? false
-            : !!options.capture;
-    }
-
-    public override removeEventListener<EventType extends string>(
-        type: EventType,
-        callback: EventType extends typeof FpsEvent.eventName
-            ? (event: FpsEvent) => void
-            : (event: any) => void,
-        options?: AddEventListenerOptions | boolean,
-    ): boolean {
-        super.removeEventListener(type, callback, options);
-
-        const captureMap = this.listeners.get(type);
-        if (captureMap) {
-            const functionMap = captureMap.get(this.isCapturing(options));
-            if (functionMap) {
-                const optionsArray = functionMap.get(callback);
-                if (optionsArray) {
-                    functionMap.set(
-                        callback,
-                        optionsArray.filter((option) => {
-                            if (typeof option !== typeof options) {
-                                return true;
-                            }
-
-                            if (isObject(options) && isObject(option)) {
-                                return !(
-                                    options.capture === option.capture &&
-                                    options.once === option.once &&
-                                    options.passive === option.passive
-                                );
-                            }
-
-                            // covers undefined and boolean values
-                            return option !== options;
-                        }),
-                    );
-                }
-            }
-        }
-
-        return false;
-    }
-
-    public removeAllEventListeners() {
-        Array.from(this.listeners.entries()).forEach(
-            ([
-                eventType,
-                captureMap,
-            ]) => {
-                Array.from(captureMap.values()).forEach((functionMap) => {
-                    Array.from(functionMap.entries()).forEach(
-                        ([
-                            callback,
-                            optionsArray,
-                        ]) => {
-                            optionsArray.forEach((option) => {
-                                this.removeEventListener(eventType, callback, option);
-                            });
-                        },
-                    );
-                });
-            },
-        );
-    }
-
     public enableAnimation(value: boolean) {
         if (value && !this.animationEnabled) {
             this.resumeAnimation();
@@ -222,7 +115,7 @@ export class ThreeJsAnimation extends EventTarget {
         const diffTime = newTime - this.lastFpsEmitTime;
         if (diffTime > this.fpsEmitDelay) {
             const fps = (this.frameCountSinceLastFps * 1000) / diffTime;
-            this.dispatchEvent(new FpsEvent(fps));
+            this.dispatch(new FpsEvent({detail: fps}));
             this.frameCountSinceLastFps = 0;
             this.lastFpsEmitTime = newTime;
         } else {
@@ -261,18 +154,21 @@ export class ThreeJsAnimation extends EventTarget {
         }
     }
 
-    private initSizes(initSize: Size): void {
-        this.camera = new PerspectiveCamera(75, initSize.w / initSize.h, 0.1, 1000);
+    private initSizes(initSize: Dimensions): void {
+        this.camera = new PerspectiveCamera(75, initSize.width / initSize.height, 0.1, 1000);
         const tanFov = Math.tan(((Math.PI / 180) * this.camera.fov) / 2);
 
         this.camera.position.z = 3;
         this.scene = this.initScene(this.camera);
-        this.starterCameraDimensions = {tanFov, canvasHeight: initSize.h};
+        this.starterCameraDimensions = {tanFov, canvasHeight: initSize.height};
         this.resumeAnimation();
     }
 
-    public updateSize(rawNewSize: Size): void {
-        const newSize = {w: Math.floor(rawNewSize.w), h: Math.floor(rawNewSize.h)};
+    public updateSize(rawNewSize: Dimensions): void {
+        const newSize: Dimensions = {
+            width: Math.floor(rawNewSize.width),
+            height: Math.floor(rawNewSize.height),
+        };
 
         if (!this.starterCameraDimensions) {
             this.initSizes(newSize);
@@ -282,7 +178,7 @@ export class ThreeJsAnimation extends EventTarget {
             return;
         }
 
-        this.webGlRenderer?.setSize(newSize.w, newSize.h);
+        this.webGlRenderer?.setSize(newSize.width, newSize.height);
         if (this.camera) {
             if (!this.starterCameraDimensions) {
                 throw new Error(
@@ -292,12 +188,12 @@ export class ThreeJsAnimation extends EventTarget {
             if (!this.scene) {
                 throw new Error(`Camera is defined already but the scene isn't.`);
             }
-            this.camera.aspect = newSize.w / newSize.h;
+            this.camera.aspect = newSize.width / newSize.height;
             this.camera.fov =
                 (360 / Math.PI) *
                 Math.atan(
                     this.starterCameraDimensions.tanFov *
-                        (newSize.h / this.starterCameraDimensions.canvasHeight),
+                        (newSize.height / this.starterCameraDimensions.canvasHeight),
                 );
             this.camera.updateProjectionMatrix();
         }

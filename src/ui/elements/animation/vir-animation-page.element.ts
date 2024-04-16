@@ -1,13 +1,5 @@
-import {
-    assignWithCleanup,
-    css,
-    defineElement,
-    defineElementEvent,
-    html,
-    listen,
-    unsafeCSS,
-} from 'element-vir';
-import {ThreeJsAnimation} from '../../../interfaces/threejs-animation';
+import {css, defineElement, defineElementEvent, html, listen, unsafeCSS} from 'element-vir';
+import {ThreeJsAnimation} from '../../../services/threejs-animation';
 import {VirAnimation} from './vir-animation.element';
 
 export const AnimationPage = defineElement<{
@@ -37,27 +29,26 @@ export const AnimationPage = defineElement<{
     events: {
         fps: defineElementEvent<number>(),
     },
+    stateInitStatic: {
+        lastAnimation: undefined as undefined | ThreeJsAnimation,
+    },
     cleanupCallback({inputs}) {
         inputs.animation?.destroy();
     },
-    renderCallback: ({inputs, dispatch, events}) => {
+    renderCallback: ({inputs, state, updateState, dispatch, events}) => {
+        if (state.lastAnimation !== inputs.animation) {
+            state.lastAnimation?.destroy();
+            updateState({lastAnimation: inputs.animation});
+        }
+
         return html`
             <div class="slot-wrapper">
                 <slot></slot>
             </div>
-            <${VirAnimation}
-                ${assignWithCleanup(
-                    VirAnimation,
-                    {
-                        animation: inputs.animation,
-                        animationEnabled: inputs.animationEnabled,
-                    },
-                    (oldValue) => {
-                        if (oldValue.animation !== inputs.animation) {
-                            oldValue.animation?.destroy();
-                        }
-                    },
-                )}
+            <${VirAnimation.assign({
+                animation: inputs.animation,
+                animationEnabled: inputs.animationEnabled,
+            })}
                 ${listen(VirAnimation.events.fpsUpdate, (event) => {
                     dispatch(new events.fps(event.detail));
                 })}

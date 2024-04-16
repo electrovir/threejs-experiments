@@ -13,16 +13,9 @@ import {
     WebGLRenderer,
 } from 'three';
 import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
-import {loadModel} from '../../../../interfaces/model-loader';
-import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
-
-/** This ain't the prettiest code, but it works. */
-
-export enum AvailableModels {
-    Bottle = 'bottle',
-    Cube = 'cube',
-    Sphere = 'sphere',
-}
+import {loadModel} from '../../../../services/model-loader';
+import {AvailableModels} from '../../../../services/models';
+import {ModelToggleEvent, ThreeJsAnimation} from '../../../../services/threejs-animation';
 
 function setMorphDirections(mesh: Mesh & {morphDirections?: number[]}) {
     if (mesh.morphTargetInfluences) {
@@ -143,38 +136,30 @@ function lightWithPosition(
     color: ColorRepresentation,
     intensity: number,
     distance: number,
-    decay: number,
     position: [number, number, number],
 ) {
-    const pointLight = new PointLight(color, intensity, distance, decay);
+    const pointLight = new PointLight(color, intensity, distance);
     pointLight.position.set(...position);
     return pointLight;
-}
-
-export type ModelToggle = {showing: boolean; model: AvailableModels};
-
-export class ModelToggledEvent extends CustomEvent<ModelToggle> {
-    static readonly eventName = 'modelToggled';
-
-    constructor(input: ModelToggle) {
-        super(ModelToggledEvent.eventName, {detail: input, bubbles: true, composed: true});
-    }
 }
 
 // https://threejs.org/docs/index.html#manual/en/introduction/Loading-3D-models
 
 export class LoadingModelsAnimation extends ThreeJsAnimation {
-    private async addLights(scene: Scene, addLightVisualizations = false) {
-        const waterBottleSpotlight = new SpotLight('white', 7, 0, Math.PI / 16);
+    private async addLights(
+        scene: Scene,
+        /** For debugging, set to true. */
+        addLightVisualizations = false,
+    ) {
+        const waterBottleSpotlight = new SpotLight('white', 700, 0, Math.PI / 16);
         waterBottleSpotlight.position.set(1, 0.5, 2);
         waterBottleSpotlight.target = await this.models[AvailableModels.Bottle];
         const lights = [
-            new AmbientLight(0x404040),
+            new AmbientLight(0x555555),
             lightWithPosition(
                 0xffffff,
-                0.8,
-                20,
-                1,
+                50,
+                0,
                 [
                     -1,
                     1,
@@ -184,9 +169,8 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
             // lightWithPosition(0xffffff, 1, 20, 1, [1, 0, -3]),
             lightWithPosition(
                 0xffffff,
-                1,
                 10,
-                1,
+                0,
                 [
                     3,
                     4,
@@ -229,7 +213,7 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
     public async showModel(show: boolean, modelKey: AvailableModels) {
         const model = await this.models[modelKey];
         const keyInserted = modelKey in this.insertedModels;
-        this.dispatchEvent(new ModelToggledEvent({model: modelKey, showing: show}));
+        this.dispatch(new ModelToggleEvent({detail: {model: modelKey, showing: show}}));
         if (show && !keyInserted) {
             this.insertedModels[modelKey] = model;
             this.scene.add(model);

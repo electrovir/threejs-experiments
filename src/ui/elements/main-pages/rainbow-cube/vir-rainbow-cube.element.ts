@@ -1,6 +1,4 @@
-import {assign, defineElementNoInputs, html, listen} from 'element-vir';
-import {css} from 'lit';
-import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
+import {css, defineElementNoInputs, html, listen, perInstance} from 'element-vir';
 import {AnimationPage} from '../../animation/vir-animation-page.element';
 import {RainbowCubeAnimation} from './rainbow-cube.animation';
 
@@ -17,16 +15,12 @@ export const VirRainbowCube = defineElementNoInputs({
             padding: 6px;
         }
     `,
-    stateInit: {
-        animation: undefined as undefined | ThreeJsAnimation,
+    stateInitStatic: {
+        animation: perInstance(() => new RainbowCubeAnimation()),
         animationEnabled: true,
         currentFps: 0,
     },
     renderCallback: ({state, updateState}) => {
-        if (!state.animation) {
-            updateState({animation: new RainbowCubeAnimation()});
-        }
-
         const links = [
             {
                 url: 'https://threejs.org/docs/?q=light#api/en/lights/AmbientLight',
@@ -53,11 +47,10 @@ export const VirRainbowCube = defineElementNoInputs({
         });
 
         return html`
-            <${AnimationPage}
-                ${assign(AnimationPage, {
-                    animation: state.animation,
-                    animationEnabled: state.animationEnabled,
-                })}
+            <${AnimationPage.assign({
+                animation: state.animation,
+                animationEnabled: state.animationEnabled,
+            })}
                 ${listen(AnimationPage.events.fps, (event) =>
                     updateState({currentFps: event.detail}),
                 )}

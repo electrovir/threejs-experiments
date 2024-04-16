@@ -1,13 +1,9 @@
 import {getEnumTypedValues} from '@augment-vir/common';
-import {assign, defineElementNoInputs, html, listen} from 'element-vir';
-import {css} from 'lit';
+import {css, defineElementNoInputs, html, listen} from 'element-vir';
+import {AvailableModels} from '../../../../services/models';
+import {ModelToggleEvent} from '../../../../services/threejs-animation';
 import {AnimationPage} from '../../animation/vir-animation-page.element';
-import {
-    AvailableModels,
-    LoadingModelsAnimation,
-    ModelToggledEvent,
-    models,
-} from './loaded-models.animation';
+import {LoadingModelsAnimation, models} from './loaded-models.animation';
 
 // https://threejs.org/docs/index.html#manual/en/introduction/Loading-3D-models
 
@@ -28,7 +24,7 @@ export const VirLoadingModel = defineElementNoInputs({
             cursor: pointer;
         }
     `,
-    stateInit: {
+    stateInitStatic: {
         animation: undefined as undefined | LoadingModelsAnimation,
         animationEnabled: true,
         currentFps: 0,
@@ -38,24 +34,20 @@ export const VirLoadingModel = defineElementNoInputs({
         if (!state.animation) {
             const newAnimation = new LoadingModelsAnimation();
             updateState({animation: newAnimation});
-            newAnimation.addEventListener(
-                ModelToggledEvent.eventName,
-                (event: ModelToggledEvent) => {
-                    updateState({
-                        modelsShowing: {
-                            ...state.modelsShowing,
-                            [event.detail.model]: event.detail.showing,
-                        },
-                    });
-                },
-            );
+            newAnimation.listen(ModelToggleEvent, (event) => {
+                updateState({
+                    modelsShowing: {
+                        ...state.modelsShowing,
+                        [event.detail.model]: event.detail.showing,
+                    },
+                });
+            });
         }
         return html`
-            <${AnimationPage}
-                ${assign(AnimationPage, {
-                    animationEnabled: state.animationEnabled,
-                    animation: state.animation,
-                })}
+            <${AnimationPage.assign({
+                animationEnabled: state.animationEnabled,
+                animation: state.animation,
+            })}
                 ${listen(AnimationPage.events.fps, (event) =>
                     updateState({currentFps: event.detail}),
                 )}

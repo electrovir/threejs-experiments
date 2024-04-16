@@ -1,16 +1,14 @@
 import {BoxGeometry, Camera, Mesh, MeshBasicMaterial, Scene, WebGLRenderer} from 'three';
-import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
+import {ThreeJsAnimation} from '../../../../services/threejs-animation';
 
 // https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html
 export class SingleColorCubeAnimation extends ThreeJsAnimation {
-    constructor(private readonly cubeColor = 0x00ff00) {
-        super();
-    }
+    private cube: Mesh<BoxGeometry, MeshBasicMaterial>;
 
-    private cube: Mesh<BoxGeometry, MeshBasicMaterial> = new Mesh(
-        new BoxGeometry(),
-        new MeshBasicMaterial({color: this.cubeColor}),
-    );
+    constructor(cubeColor: number) {
+        super();
+        this.cube = new Mesh(new BoxGeometry(), new MeshBasicMaterial({color: cubeColor}));
+    }
 
     protected override initScene() {
         const scene = new Scene();

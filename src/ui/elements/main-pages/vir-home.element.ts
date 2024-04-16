@@ -1,5 +1,4 @@
-import {css, defineElementNoInputs} from 'element-vir';
-import {html} from 'lit/static-html.js';
+import {css, defineElementNoInputs, html} from 'element-vir';
 
 export const VirHome = defineElementNoInputs({
     tagName: 'vir-home',

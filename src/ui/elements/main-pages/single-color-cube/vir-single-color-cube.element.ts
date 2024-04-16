@@ -1,5 +1,4 @@
-import {assign, css, defineElementNoInputs, html, listen} from 'element-vir';
-import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
+import {css, defineElementNoInputs, html, listen, perInstance} from 'element-vir';
 import {AnimationPage} from '../../animation/vir-animation-page.element';
 import {SingleColorCubeAnimation} from './single-color-cube.animation';
 
@@ -19,21 +18,17 @@ export const VirSingleColorCube = defineElementNoInputs({
             padding: 6px;
         }
     `,
-    stateInit: {
-        animation: undefined as ThreeJsAnimation | undefined,
+    stateInitStatic: {
+        animation: perInstance(() => new SingleColorCubeAnimation(0x00ff00)),
         animationEnabled: true,
         currentFps: 0,
     },
-    renderCallback({state, updateState, host}) {
-        if (!state.animation) {
-            updateState({animation: new SingleColorCubeAnimation(0x00ff00)});
-        }
+    renderCallback({state, updateState}) {
         return html`
-            <${AnimationPage}
-                ${assign(AnimationPage, {
-                    animationEnabled: state.animationEnabled,
-                    animation: state.animation,
-                })}
+            <${AnimationPage.assign({
+                animationEnabled: state.animationEnabled,
+                animation: state.animation,
+            })}
                 ${listen(AnimationPage.events.fps, (event) => {
                     updateState({currentFps: event.detail});
                 })}

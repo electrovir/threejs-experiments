@@ -1,10 +1,9 @@
 import {getEnumTypedValues} from '@augment-vir/common';
-import {assign, css, defineElementEvent, defineElementNoInputs, html} from 'element-vir';
-import {RouteListener} from 'spa-router-vir';
+import {css, defineElementEvent, defineElementNoInputs, html} from 'element-vir';
+import {isJsonEqual} from 'run-time-assertions';
 import {
     ExperimentsFullRoute,
     ExperimentsPage,
-    ValidExperimentsPath,
     defaultRoute,
     threeJsExperimentsRouter,
 } from '../../../../threejs-experiments-router';
@@ -32,20 +31,17 @@ export const VirAppNav = defineElementNoInputs({
             border-width: 0 1px;
         }
     `,
-    stateInit: {
-        currentRoute: undefined as ExperimentsFullRoute | undefined,
-        routeListener: undefined as undefined | RouteListener<ValidExperimentsPath>,
+    stateInitStatic: {
+        currentRoute: defaultRoute,
     },
     events: {
         navUpdate: defineElementEvent<ExperimentsFullRoute>(),
     },
     initCallback({updateState, dispatch, state, events}) {
-        threeJsExperimentsRouter.addRouteListener(true, (route) => {
-            const rootRoute = route.paths[0];
-            const currentRoute = state.currentRoute?.paths[0];
-            if (rootRoute !== currentRoute) {
-                updateState({currentRoute: route});
-                dispatch(new events.navUpdate(route));
+        threeJsExperimentsRouter.listen(true, (newRoute) => {
+            if (!isJsonEqual(state.currentRoute, newRoute)) {
+                updateState({currentRoute: newRoute});
+                dispatch(new events.navUpdate(newRoute));
             }
         });
     },
@@ -55,14 +51,12 @@ export const VirAppNav = defineElementNoInputs({
                 ${getEnumTypedValues(ExperimentsPage).map((page) => {
                     return html`
                         <li>
-                            <${VirRouteLink}
-                                ${assign(VirRouteLink, {
-                                    route: {
-                                        ...defaultRoute,
-                                        paths: [page],
-                                    },
-                                })}
-                            ></${VirRouteLink}>
+                            <${VirRouteLink.assign({
+                                route: {
+                                    ...defaultRoute,
+                                    paths: [page],
+                                },
+                            })}></${VirRouteLink}>
                         </li>
                     `;
                 })}

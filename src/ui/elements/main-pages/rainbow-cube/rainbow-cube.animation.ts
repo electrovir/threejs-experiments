@@ -9,27 +9,30 @@ import {
     Scene,
     WebGLRenderer,
 } from 'three';
-import {ThreeJsAnimation} from '../../../../interfaces/threejs-animation';
+import {ThreeJsAnimation} from '../../../../services/threejs-animation';
 
 export class RainbowCubeAnimation extends ThreeJsAnimation {
-    constructor(private readonly cubeColor = 0xff0000, private readonly cubeSize = 1) {
-        super();
-    }
+    private cubeColor = 0xff0000;
+    private cubeSize = 1;
 
     private cube: Mesh<BoxGeometry, MeshPhysicalMaterial> = new Mesh(
         new BoxGeometry(this.cubeSize),
         new MeshPhysicalMaterial({color: this.cubeColor}),
     );
 
+    constructor() {
+        super();
+    }
+
     private addLights(scene: Scene) {
-        const pointLightRight = new PointLight(0xffffff, 1, 10);
+        const pointLightRight = new PointLight(0xffffff, 2, 0);
         pointLightRight.position.set(1, 0, 1);
 
-        const pointLightAbove = new PointLight(0xffffff, 1, 10);
+        const pointLightAbove = new PointLight(0xffffff, 2, 0);
         pointLightAbove.position.set(-0.5, 1, 1);
 
         const lights = [
-            new AmbientLight(0x404040),
+            new AmbientLight(0x555555),
             pointLightAbove,
             pointLightRight,
         ];

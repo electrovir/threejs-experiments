@@ -6,7 +6,7 @@ import {navElement} from './nav-elements';
 
 export const ThreeJsExperimentsAppElement = defineElementNoInputs({
     tagName: 'vir-three-js-experiments-app',
-    stateInit: {
+    stateInitStatic: {
         fullRoute: undefined as ExperimentsFullRoute | undefined,
     },
     styles: css`

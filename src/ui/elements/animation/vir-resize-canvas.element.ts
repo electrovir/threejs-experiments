@@ -1,3 +1,4 @@
+import {Dimensions} from '@augment-vir/common';
 import {
     css,
     defineElementEvent,
@@ -6,7 +7,6 @@ import {
     onDomCreated,
     onResize,
 } from 'element-vir';
-import {Size} from '../../../interfaces/size';
 
 // store the canvas in a single place so we don't create multiple contexts
 let GlobalCanvas: undefined | HTMLCanvasElement = undefined;
@@ -44,7 +44,7 @@ export const VirResizeCanvas = defineElementNoInputs({
     `,
     events: {
         canvasInit: defineElementEvent<HTMLCanvasElement>(),
-        canvasResize: defineElementEvent<Size>(),
+        canvasResize: defineElementEvent<Dimensions>(),
     },
     renderCallback: ({dispatch, events}) => {
         if (GlobalCanvas) {
@@ -55,8 +55,8 @@ export const VirResizeCanvas = defineElementNoInputs({
                 ${onResize((updateEntry) => {
                     dispatch(
                         new events.canvasResize({
-                            w: updateEntry.contentRect.width,
-                            h: updateEntry.contentRect.height,
+                            width: updateEntry.contentRect.width,
+                            height: updateEntry.contentRect.height,
                         }),
                     );
                 })}

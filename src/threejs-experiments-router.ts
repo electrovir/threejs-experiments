@@ -1,6 +1,5 @@
 import {isEnumValue} from '@augment-vir/common';
-import {createSpaRouter, SpaRouter} from 'spa-router-vir';
-import {FullRoute} from '../node_modules/spa-router-vir/dist/router/full-route';
+import {FullRoute, SpaRouter} from 'spa-router-vir';
 
 export enum ExperimentsPage {
     Home = 'home',
@@ -11,7 +10,9 @@ export enum ExperimentsPage {
 
 export type ValidExperimentsPath = [ExperimentsPage];
 
-export type ExperimentsFullRoute = Required<Readonly<FullRoute<ValidExperimentsPath>>>;
+export type ExperimentsFullRoute = Readonly<
+    Required<FullRoute<ValidExperimentsPath, undefined, undefined>>
+>;
 
 export const defaultRoute: ExperimentsFullRoute = {
     paths: [ExperimentsPage.Home],
@@ -19,20 +20,18 @@ export const defaultRoute: ExperimentsFullRoute = {
     hash: undefined,
 };
 
-export const threeJsExperimentsRouter: SpaRouter<ValidExperimentsPath> =
-    createSpaRouter<ValidExperimentsPath>({
-        maxListenerCount: 1,
-        routeBase: 'threejs-experiments',
-        routeSanitizer: (route): ExperimentsFullRoute => {
-            const firstRoute = route.paths[0];
+export const threeJsExperimentsRouter = new SpaRouter<ValidExperimentsPath, undefined, undefined>({
+    basePath: 'threejs-experiments',
+    sanitizeRoute(route) {
+        const firstRoute = route.paths[0];
 
-            if (isEnumValue(firstRoute, ExperimentsPage)) {
-                return {
-                    ...defaultRoute,
-                    paths: [firstRoute],
-                };
-            } else {
-                return defaultRoute;
-            }
-        },
-    });
+        if (isEnumValue(firstRoute, ExperimentsPage)) {
+            return {
+                ...defaultRoute,
+                paths: [firstRoute],
+            };
+        } else {
+            return defaultRoute;
+        }
+    },
+});

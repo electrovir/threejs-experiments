@@ -1,5 +1,4 @@
 import {defineElement, html} from 'element-vir';
-import {routeOnLinkClick} from 'spa-router-vir';
 import {
     ExperimentsFullRoute,
     threeJsExperimentsRouter,
@@ -20,9 +19,9 @@ export const VirRouteLink = defineElement<{
 
         const template = html`
             <a
-                href=${threeJsExperimentsRouter.createRoutesUrl(inputs.route)}
+                href=${threeJsExperimentsRouter.createRouteUrl(inputs.route)}
                 @click=${(clickEvent: MouseEvent) => {
-                    routeOnLinkClick(clickEvent, inputs.route, threeJsExperimentsRouter);
+                    threeJsExperimentsRouter.setRouteOnDirectNavigation(inputs.route, clickEvent);
                 }}
             >
                 ${label}

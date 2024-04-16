@@ -30,10 +30,13 @@ export function createThrottle<CallbackInputs extends any[]>(
                 if (clearFirstTriggeredTimeout) {
                     window.clearTimeout(clearFirstTriggeredTimeout);
                 }
-                clearFirstTriggeredTimeout = window.setTimeout(() => {
-                    firstTriggered = false;
-                    clearFirstTriggeredTimeout = undefined;
-                }, Math.floor(throttleTime * 2));
+                clearFirstTriggeredTimeout = window.setTimeout(
+                    () => {
+                        firstTriggered = false;
+                        clearFirstTriggeredTimeout = undefined;
+                    },
+                    Math.floor(throttleTime * 2),
+                );
             }, throttleTime);
         }
     };
