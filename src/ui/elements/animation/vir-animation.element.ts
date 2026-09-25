@@ -34,7 +34,6 @@ export const VirAnimation = defineElement<{
         if (inputs.animation) {
             if (!inputs.animation.isInitialized() && state.canvas) {
                 inputs.animation.init({
-                    canvas: state.canvas,
                     startAnimating: inputs.animationEnabled,
                     size: state.canvasSize,
                 });

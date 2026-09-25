@@ -1,7 +1,8 @@
-import {type Dimensions, type PartialWithUndefined} from '@augment-vir/common';
-import {type Camera, PerspectiveCamera, type Scene, WebGLRenderer} from 'three';
-import {ListenTarget, defineTypedCustomEvent} from 'typed-event-target';
+import {type Dimensions, ensureArray, type PartialWithUndefined} from '@augment-vir/common';
+import {type Camera, Mesh, PerspectiveCamera, type Scene, type WebGLRenderer} from 'three';
+import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
 import {type ModelToggle} from './models.js';
+import {sharedWebGlRenderer} from './shared-webgl-renderer.js';
 
 // resize help from https://jsfiddle.net/Q4Jpu/
 
@@ -27,7 +28,6 @@ export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelTogg
     // ==============================================
 
     protected camera: PerspectiveCamera | undefined;
-    protected canvas: HTMLCanvasElement | undefined;
     protected scene: Scene | undefined;
     protected webGlRenderer: WebGLRenderer | undefined;
 
@@ -41,22 +41,15 @@ export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelTogg
     protected fpsEmitDelay = 500;
     public isDestroyed = false;
 
-    protected destroyWebGlRenderer() {
-        if (this.webGlRenderer) {
-            this.webGlRenderer.renderLists.dispose();
-            this.webGlRenderer.clear();
-            this.webGlRenderer.state.reset();
-            // this doesn't actually work. It fails in Safari, Chrome, and Firefox.
-            // this.webGlRenderer.forceContextLoss();
-            delete (this.webGlRenderer as Partial<WebGLRenderer>).domElement;
-            delete (this.webGlRenderer as any).context;
-            this.webGlRenderer.dispose();
-        }
-        this.webGlRenderer = undefined;
-    }
-
     protected destroyScene() {
         if (this.scene) {
+            /** The shared renderer outlives this scene, so its GPU buffers must be freed here. */
+            this.scene.traverse((object) => {
+                if (object instanceof Mesh) {
+                    object.geometry.dispose();
+                    ensureArray(object.material).forEach((material) => material.dispose());
+                }
+            });
             // wipe out the rendered scene to just black pixels
             this.scene.clear();
             this.scene.removeFromParent();
@@ -64,20 +57,14 @@ export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelTogg
         }
     }
 
-    /**
-     * Unfortunately this doesn't fully clean up the webgl context and, from scouring stackoverflow,
-     * public email threads, threejs documentation, and random guides, there's no way to REALLY do
-     * that. None of suggested answers (when there actually are any) work. (If you find a way that
-     * works please tell me!)
-     */
+    /** Leaves {@link sharedWebGlRenderer} intact for the next animation. */
     public override destroy() {
         this.animationEnabled = false;
         this.isDestroyed = true;
         this.animate = () => false;
         this.destroyScene();
-        this.destroyWebGlRenderer();
+        this.webGlRenderer = undefined;
         this.camera = undefined;
-        this.canvas = undefined;
         this.starterCameraDimensions = undefined;
         this.lastRenderTime = 0;
         this.lastFpsEmitTime = 0;
@@ -85,13 +72,11 @@ export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelTogg
     }
 
     public init({
-        canvas,
         startAnimating,
         fpsEmitDelay,
         size,
     }: Readonly<
         {
-            canvas: HTMLCanvasElement;
             startAnimating: boolean;
         } & PartialWithUndefined<{
             fpsEmitDelay: number;
@@ -102,19 +87,16 @@ export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelTogg
             console.error(this);
             throw new Error('Cannot initialize a destroyed animation.');
         }
-        this.canvas = canvas;
         this.animationEnabled = startAnimating;
         this.fpsEmitDelay = fpsEmitDelay || 500;
-        this.webGlRenderer = new WebGLRenderer({
-            canvas,
-        });
+        this.webGlRenderer = sharedWebGlRenderer;
         if (size) {
             this.updateSize(size);
         }
     }
 
     public isInitialized() {
-        return !!(this.canvas && this.camera && this.scene && this.webGlRenderer);
+        return !!(this.camera && this.scene && this.webGlRenderer);
     }
 
     public enableAnimation(value: boolean) {
@@ -150,7 +132,7 @@ export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelTogg
 
     protected animateWrapper(newTime: number) {
         if (this.animationEnabled) {
-            if (this.webGlRenderer && this.camera && this.scene && this.canvas) {
+            if (this.webGlRenderer && this.camera && this.scene) {
                 const previousLastRenderTime = this.lastRenderTime;
                 this.emitFps(newTime);
                 // update this before running animate so that animate doesn't mess up our FPS if it's really long
@@ -193,7 +175,7 @@ export abstract class ThreeJsAnimation extends ListenTarget<FpsEvent | ModelTogg
             this.initSizes(newSize);
         }
 
-        if (!(this.canvas && this.webGlRenderer && this.camera)) {
+        if (!(this.webGlRenderer && this.camera)) {
             return;
         }
 

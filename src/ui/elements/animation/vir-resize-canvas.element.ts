@@ -1,5 +1,6 @@
 import {type Dimensions} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html, onDomCreated, onResize} from 'element-vir';
+import {sharedWebGlRenderer} from '../../../services/shared-webgl-renderer.js';
 
 export const VirResizeCanvas = defineElement()({
     tagName: 'vir-resize-canvas',
@@ -51,23 +52,16 @@ export const VirResizeCanvas = defineElement()({
                         }),
                     );
                 })}
+                ${onDomCreated(() => {
+                    dispatch(
+                        new events.canvasInit({
+                            detail: sharedWebGlRenderer.domElement,
+                        }),
+                    );
+                })}
                 class="canvas-wrapper"
             >
-                <canvas
-                    ${onDomCreated((element) => {
-                        if (element instanceof HTMLCanvasElement) {
-                            dispatch(
-                                new events.canvasInit({
-                                    detail: element,
-                                }),
-                            );
-                        } else {
-                            throw new TypeError(
-                                'Canvas DOM was created but is not a canvas element.',
-                            );
-                        }
-                    })}
-                ></canvas>
+                ${sharedWebGlRenderer.domElement}
             </div>
         `;
     },
