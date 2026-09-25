@@ -1,18 +1,20 @@
-import {resolve} from 'path';
+import {defineConfig} from '@virmator/frontend/configs/vite.config.base.js';
+import {resolve} from 'node:path';
 import {visualizer} from 'rollup-plugin-visualizer';
-import {basePlugins, defineConfig} from 'virmator/dist/compiled-base-configs/base-vite';
 
 export default defineConfig(
     {
         forGitHubPages: true,
-        packageDirPath: resolve(__dirname, '..'),
+        packageDirPath: resolve(import.meta.dirname, '..'),
     },
     (baseConfig) => {
         return {
             ...baseConfig,
             plugins: [
-                ...basePlugins,
-                visualizer({filename: 'build-asset-sizes.html'}),
+                ...(baseConfig.plugins || []),
+                visualizer({
+                    filename: 'build-asset-sizes.html',
+                }),
             ],
         };
     },

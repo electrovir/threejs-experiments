@@ -1,21 +1,25 @@
+import {assertWrap} from '@augment-vir/assert';
+import {getObjectTypedEntries} from '@augment-vir/common';
 import {
     AmbientLight,
-    Camera,
-    ColorRepresentation,
+    type Camera,
+    type ColorRepresentation,
     Mesh,
     MeshBasicMaterial,
     MeshStandardMaterial,
-    Object3D,
+    type Object3D,
     PointLight,
     Scene,
     SphereGeometry,
     SpotLight,
-    WebGLRenderer,
 } from 'three';
-import {GLTF, GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
-import {loadModel} from '../../../../services/model-loader';
-import {AvailableModels} from '../../../../services/models';
-import {ModelToggleEvent, ThreeJsAnimation} from '../../../../services/threejs-animation';
+import {type GLTF, GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {AvailableModels} from '../../../../services/models.js';
+import {
+    type AnimateParams,
+    ModelToggleEvent,
+    ThreeJsAnimation,
+} from '../../../../services/threejs-animation.js';
 
 function setMorphDirections(mesh: Mesh & {morphDirections?: number[]}) {
     if (mesh.morphTargetInfluences) {
@@ -40,7 +44,7 @@ export const models: Record<AvailableModels, ModelData> = {
             url: 'https://creativecommons.org/publicdomain/zero/1.0/',
         },
         href: 'models/WaterBottle.glb',
-        callback: (loadedFile) => {
+        callback(loadedFile) {
             const bottle = loadedFile.scene;
             bottle.position.set(3, 3, -5);
             bottle.scale.set(10, 10, 10);
@@ -55,12 +59,16 @@ export const models: Record<AvailableModels, ModelData> = {
             url: 'https://creativecommons.org/publicdomain/zero/1.0/',
         },
         href: 'models/AnimatedMorphCube.glb',
-        callback: (loadedFile) => {
-            const morphCube = loadedFile.scene.children[0]! as Mesh & {morphDirections?: number[]};
+        callback(loadedFile) {
+            const morphCube = assertWrap.isDefined(loadedFile.scene.children[0]) as Mesh & {
+                morphDirections?: number[];
+            };
 
             morphCube.traverse((child) => {
                 if (child instanceof Mesh) {
-                    child.material = new MeshStandardMaterial({color: 0xff9900});
+                    child.material = new MeshStandardMaterial({
+                        color: 0xff_99_00,
+                    });
                 }
             });
             morphCube.position.set(-4, 2, -2);
@@ -76,13 +84,15 @@ export const models: Record<AvailableModels, ModelData> = {
             url: 'https://creativecommons.org/publicdomain/zero/1.0/',
         },
         href: 'models/AnimatedMorphSphere.glb',
-        callback: (loadedFile) => {
-            const morphSphere = loadedFile.scene.children[0]! as Mesh & {
+        callback(loadedFile) {
+            const morphSphere = assertWrap.isDefined(loadedFile.scene.children[0]) as Mesh & {
                 morphDirections?: number[];
             };
             morphSphere.traverse((object) => {
                 if (object instanceof Mesh) {
-                    object.material = new MeshStandardMaterial({color: 0x33ccff});
+                    object.material = new MeshStandardMaterial({
+                        color: 0x33_cc_ff,
+                    });
                 }
             });
             morphSphere.position.setY(-2);
@@ -100,18 +110,19 @@ function hasMorphDirections(input: any): input is MeshWithDirections {
 
 function morphMesh(diff: number, object: Object3D) {
     if (!hasMorphDirections(object)) {
-        throw new Error(`object was supposed to have morph directions`);
+        throw new Error('object was supposed to have morph directions');
     }
     object.rotation.z += diff * 0.01;
     const morphs = object.morphTargetInfluences;
     const morphDirections = object.morphDirections;
     if (morphs) {
-        morphs.forEach((_, index) => {
-            morphs[index] += morphDirections[index]! * diff * 0.01;
-            if (morphs[index]! >= 1) {
+        morphs.forEach((morph, index) => {
+            const newMorph = morph + (morphDirections[index] ?? 0) * diff * 0.01;
+            morphs[index] = newMorph;
+            if (newMorph >= 1) {
                 morphs[index] = 1;
                 morphDirections[index] = -1;
-            } else if (morphs[index]! <= 0 && morphDirections[index] !== 0) {
+            } else if (newMorph <= 0 && morphDirections[index] !== 0) {
                 morphs[index] = 0;
                 morphDirections[index] = 0;
                 if (index + 1 in morphDirections) {
@@ -125,19 +136,28 @@ function morphMesh(diff: number, object: Object3D) {
 }
 
 const modelAnimations: Record<AvailableModels, (diff: number, input: Object3D) => void> = {
-    [AvailableModels.Bottle]: (diff, object) => {
+    [AvailableModels.Bottle](diff, object) {
         object.rotation.y += diff * 0.01;
     },
     [AvailableModels.Cube]: morphMesh,
     [AvailableModels.Sphere]: morphMesh,
 };
 
-function lightWithPosition(
-    color: ColorRepresentation,
-    intensity: number,
-    distance: number,
-    position: [number, number, number],
-) {
+function lightWithPosition({
+    color,
+    intensity,
+    distance,
+    position,
+}: Readonly<{
+    color: ColorRepresentation;
+    intensity: number;
+    distance: number;
+    position: [
+        number,
+        number,
+        number,
+    ];
+}>) {
     const pointLight = new PointLight(color, intensity, distance);
     pointLight.position.set(...position);
     return pointLight;
@@ -145,8 +165,8 @@ function lightWithPosition(
 
 // https://threejs.org/docs/index.html#manual/en/introduction/Loading-3D-models
 
-export class LoadingModelsAnimation extends ThreeJsAnimation {
-    private async addLights(
+export class LoadedModelsAnimation extends ThreeJsAnimation {
+    protected async addLights(
         scene: Scene,
         /** For debugging, set to true. */
         addLightVisualizations = false,
@@ -155,28 +175,28 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
         waterBottleSpotlight.position.set(1, 0.5, 2);
         waterBottleSpotlight.target = await this.models[AvailableModels.Bottle];
         const lights = [
-            new AmbientLight(0x555555),
-            lightWithPosition(
-                0xffffff,
-                50,
-                0,
-                [
+            new AmbientLight(0x55_55_55),
+            lightWithPosition({
+                color: 0xff_ff_ff,
+                intensity: 50,
+                distance: 0,
+                position: [
                     -1,
                     1,
                     4,
                 ],
-            ),
+            }),
             // lightWithPosition(0xffffff, 1, 20, 1, [1, 0, -3]),
-            lightWithPosition(
-                0xffffff,
-                10,
-                0,
-                [
+            lightWithPosition({
+                color: 0xff_ff_ff,
+                intensity: 10,
+                distance: 0,
+                position: [
                     3,
                     4,
                     -4,
                 ],
-            ),
+            }),
             waterBottleSpotlight,
         ];
         lights.forEach((light) => scene.add(light));
@@ -187,7 +207,9 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
                 }
                 const lightSphere = new Mesh(
                     new SphereGeometry(0.05),
-                    new MeshBasicMaterial({color: light.color}),
+                    new MeshBasicMaterial({
+                        color: light.color,
+                    }),
                 );
                 lightSphere.position.set(light.position.x, light.position.y, light.position.z);
                 scene.add(lightSphere);
@@ -196,15 +218,15 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
     }
 
     protected override scene = new Scene();
-    private loader = new GLTFLoader();
+    protected loader = new GLTFLoader();
 
-    private async loadModel(modelKey: AvailableModels) {
+    protected async loadModel(modelKey: AvailableModels) {
         const modelData: ModelData = models[modelKey];
-        const loadResult = await loadModel(this.loader, modelData.href);
+        const loadResult = await this.loader.loadAsync(modelData.href);
         return modelData.callback(loadResult);
     }
 
-    private models: Readonly<Record<AvailableModels, Promise<Object3D>>> = {
+    protected models: Readonly<Record<AvailableModels, Promise<Object3D>>> = {
         [AvailableModels.Cube]: this.loadModel(AvailableModels.Cube),
         [AvailableModels.Bottle]: this.loadModel(AvailableModels.Bottle),
         [AvailableModels.Sphere]: this.loadModel(AvailableModels.Sphere),
@@ -213,7 +235,14 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
     public async showModel(show: boolean, modelKey: AvailableModels) {
         const model = await this.models[modelKey];
         const keyInserted = modelKey in this.insertedModels;
-        this.dispatch(new ModelToggleEvent({detail: {model: modelKey, showing: show}}));
+        this.dispatch(
+            new ModelToggleEvent({
+                detail: {
+                    model: modelKey,
+                    showing: show,
+                },
+            }),
+        );
         if (show && !keyInserted) {
             this.insertedModels[modelKey] = model;
             this.scene.add(model);
@@ -223,27 +252,32 @@ export class LoadingModelsAnimation extends ThreeJsAnimation {
         }
     }
 
-    private insertedModels: Partial<Record<AvailableModels, Object3D>> = {};
+    protected insertedModels: Partial<Record<AvailableModels, Object3D>> = {};
 
     protected override initScene(camera: Camera) {
         camera.position.set(0, 0, 6);
 
-        this.showModel(true, AvailableModels.Sphere);
-        this.showModel(true, AvailableModels.Bottle);
-        this.addLights(this.scene);
+        void this.showModel(true, AvailableModels.Sphere);
+        void this.showModel(true, AvailableModels.Bottle);
+        void this.addLights(this.scene);
         return this.scene;
     }
 
-    protected override animate(
-        frameTime: number,
-        webGlRenderer: WebGLRenderer,
-        camera: Camera,
-        scene: Scene,
-    ): boolean {
+    protected override animate({
+        frameTime,
+        webGlRenderer,
+        camera,
+        scene,
+    }: Readonly<AnimateParams>): boolean {
         const diff = (frameTime * 60) / 1000;
-        (Object.keys(this.insertedModels) as AvailableModels[]).forEach((key: AvailableModels) => {
-            modelAnimations[key](diff, this.insertedModels[key]!);
-        });
+        getObjectTypedEntries(this.insertedModels).forEach(
+            ([
+                key,
+                model,
+            ]) => {
+                modelAnimations[key](diff, model);
+            },
+        );
         webGlRenderer.render(scene, camera);
         return true;
     }

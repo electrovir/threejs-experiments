@@ -1,6 +1,6 @@
 import {css, defineElement, defineElementEvent, html, listen, unsafeCSS} from 'element-vir';
-import {ThreeJsAnimation} from '../../../services/threejs-animation';
-import {VirAnimation} from './vir-animation.element';
+import {type ThreeJsAnimation} from '../../../services/threejs-animation.js';
+import {VirAnimation} from './vir-animation.element.js';
 
 export const AnimationPage = defineElement<{
     animation: undefined | ThreeJsAnimation;
@@ -29,16 +29,20 @@ export const AnimationPage = defineElement<{
     events: {
         fps: defineElementEvent<number>(),
     },
-    stateInitStatic: {
-        lastAnimation: undefined as undefined | ThreeJsAnimation,
+    state() {
+        return {
+            lastAnimation: undefined as undefined | ThreeJsAnimation,
+        };
     },
-    cleanupCallback({inputs}) {
+    cleanup({inputs}) {
         inputs.animation?.destroy();
     },
-    renderCallback: ({inputs, state, updateState, dispatch, events}) => {
+    render({inputs, state, updateState, dispatch, events}) {
         if (state.lastAnimation !== inputs.animation) {
             state.lastAnimation?.destroy();
-            updateState({lastAnimation: inputs.animation});
+            updateState({
+                lastAnimation: inputs.animation,
+            });
         }
 
         return html`
@@ -50,7 +54,11 @@ export const AnimationPage = defineElement<{
                 animationEnabled: inputs.animationEnabled,
             })}
                 ${listen(VirAnimation.events.fpsUpdate, (event) => {
-                    dispatch(new events.fps(event.detail));
+                    dispatch(
+                        new events.fps({
+                            detail: event.detail,
+                        }),
+                    );
                 })}
             ></${VirAnimation}>
         `;

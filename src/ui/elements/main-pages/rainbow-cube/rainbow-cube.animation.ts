@@ -1,38 +1,38 @@
 import {
     AmbientLight,
     BoxGeometry,
-    Camera,
-    HSL,
+    type HSL,
     Mesh,
     MeshPhysicalMaterial,
     PointLight,
     Scene,
-    WebGLRenderer,
 } from 'three';
-import {ThreeJsAnimation} from '../../../../services/threejs-animation';
+import {type AnimateParams, ThreeJsAnimation} from '../../../../services/threejs-animation.js';
 
 export class RainbowCubeAnimation extends ThreeJsAnimation {
-    private cubeColor = 0xff0000;
-    private cubeSize = 1;
+    protected cubeColor = 0xff_00_00;
+    protected cubeSize = 1;
 
-    private cube: Mesh<BoxGeometry, MeshPhysicalMaterial> = new Mesh(
+    protected cube: Mesh<BoxGeometry, MeshPhysicalMaterial> = new Mesh(
         new BoxGeometry(this.cubeSize),
-        new MeshPhysicalMaterial({color: this.cubeColor}),
+        new MeshPhysicalMaterial({
+            color: this.cubeColor,
+        }),
     );
 
     constructor() {
         super();
     }
 
-    private addLights(scene: Scene) {
-        const pointLightRight = new PointLight(0xffffff, 2, 0);
+    protected addLights(scene: Scene) {
+        const pointLightRight = new PointLight(0xff_ff_ff, 2, 0);
         pointLightRight.position.set(1, 0, 1);
 
-        const pointLightAbove = new PointLight(0xffffff, 2, 0);
+        const pointLightAbove = new PointLight(0xff_ff_ff, 2, 0);
         pointLightAbove.position.set(-0.5, 1, 1);
 
         const lights = [
-            new AmbientLight(0x555555),
+            new AmbientLight(0x55_55_55),
             pointLightAbove,
             pointLightRight,
         ];
@@ -47,14 +47,14 @@ export class RainbowCubeAnimation extends ThreeJsAnimation {
         this.addLights(scene);
         return scene;
     }
-    private frameCount = 0;
+    protected frameCount = 0;
 
-    protected override animate(
-        frameTime: number,
-        webGlRenderer: WebGLRenderer,
-        camera: Camera,
-        scene: Scene,
-    ): boolean {
+    protected override animate({
+        frameTime,
+        webGlRenderer,
+        camera,
+        scene,
+    }: Readonly<AnimateParams>): boolean {
         const diff = (frameTime * 60) / 1000;
         ++this.frameCount;
         if (this.frameCount > 100) {

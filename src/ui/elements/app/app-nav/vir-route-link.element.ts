@@ -1,33 +1,30 @@
 import {defineElement, html} from 'element-vir';
 import {
-    ExperimentsFullRoute,
     threeJsExperimentsRouter,
-} from '../../../../threejs-experiments-router';
+    type ExperimentsFullRoute,
+} from '../../../../threejs-experiments-router.js';
 
-function prettifyRouteName(input: ExperimentsFullRoute): string {
-    const spaces = input.paths[0].replace(/-/g, ' ');
-    const words = spaces.split(' ');
-    return words.map((word) => `${word[0]?.toLocaleUpperCase()}${word.slice(1)}`).join(' ');
+function prettifyRouteName(input: Readonly<ExperimentsFullRoute>) {
+    return input.paths[0]
+        .split('-')
+        .map((word) => `${word[0]?.toLocaleUpperCase()}${word.slice(1)}`)
+        .join(' ');
 }
 
 export const VirRouteLink = defineElement<{
     route: ExperimentsFullRoute;
 }>()({
     tagName: 'vir-route-link',
-    renderCallback: ({inputs}) => {
-        const label = prettifyRouteName(inputs.route);
-
-        const template = html`
+    render({inputs}) {
+        return html`
             <a
-                href=${threeJsExperimentsRouter.createRouteUrl(inputs.route)}
+                href=${threeJsExperimentsRouter.createRouteUrl(inputs.route).url}
                 @click=${(clickEvent: MouseEvent) => {
                     threeJsExperimentsRouter.setRouteOnDirectNavigation(inputs.route, clickEvent);
                 }}
             >
-                ${label}
+                ${prettifyRouteName(inputs.route)}
             </a>
         `;
-
-        return template;
     },
 });

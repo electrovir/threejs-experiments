@@ -1,13 +1,15 @@
-import {css, defineElementNoInputs, html, listen} from 'element-vir';
-import {ExperimentsFullRoute} from '../../../threejs-experiments-router';
-import {VirHome} from '../main-pages/vir-home.element';
-import {VirAppNav} from './app-nav/vir-app-nav.element';
-import {navElement} from './nav-elements';
+import {css, defineElement, html, listen} from 'element-vir';
+import {type ExperimentsFullRoute} from '../../../threejs-experiments-router.js';
+import {VirHome} from '../main-pages/vir-home.element.js';
+import {VirAppNav} from './app-nav/vir-app-nav.element.js';
+import {navElement} from './nav-elements.js';
 
-export const ThreeJsExperimentsAppElement = defineElementNoInputs({
+export const VirThreeJsExperimentsApp = defineElement()({
     tagName: 'vir-three-js-experiments-app',
-    stateInitStatic: {
-        fullRoute: undefined as ExperimentsFullRoute | undefined,
+    state() {
+        return {
+            fullRoute: undefined as ExperimentsFullRoute | undefined,
+        };
     },
     styles: css`
         :host {
@@ -22,36 +24,29 @@ export const ThreeJsExperimentsAppElement = defineElementNoInputs({
             overflow: hidden;
             display: flex;
             align-items: stretch;
-        }
 
-        main > * {
-            flex-grow: 1;
-        }
-
-        .github-banner {
-            position: absolute;
-            top: 0;
-            right: 0;
+            & > * {
+                flex-grow: 1;
+            }
         }
     `,
-    renderCallback: ({state, updateState}) => {
-        const currentElement = state.fullRoute?.paths?.[0]
-            ? navElement[state.fullRoute?.paths?.[0]]
-            : VirHome;
-
-        const currentElementTemplate = html`
-            <${currentElement}></${currentElement}>
-        `;
+    render({state, updateState}) {
+        const currentPage = state.fullRoute?.paths[0];
+        const currentElement = currentPage ? navElement[currentPage] : VirHome;
 
         return html`
             <nav>
                 <${VirAppNav}
                     ${listen(VirAppNav.events.navUpdate, (event) => {
-                        updateState({fullRoute: event.detail});
+                        updateState({
+                            fullRoute: event.detail,
+                        });
                     })}
                 ></${VirAppNav}>
             </nav>
-            <main>${currentElementTemplate}</main>
+            <main>
+                <${currentElement}></${currentElement}>
+            </main>
         `;
     },
 });

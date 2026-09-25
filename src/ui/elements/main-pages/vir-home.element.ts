@@ -1,13 +1,13 @@
-import {css, defineElementNoInputs, html} from 'element-vir';
+import {css, defineElement, html} from 'element-vir';
 
-export const VirHome = defineElementNoInputs({
+export const VirHome = defineElement()({
     tagName: 'vir-home',
     styles: css`
         :host {
             padding: 0 32px;
         }
     `,
-    renderCallback: () => {
+    render() {
         return html`
             <h1>Welcome</h1>
             <p>

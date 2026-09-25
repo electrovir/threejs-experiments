@@ -1,8 +1,7 @@
-import {Dimensions} from '@augment-vir/common';
+import {Debounce, DebounceStyle, type Dimensions} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html, listen, unsafeCSS} from 'element-vir';
-import {FpsEvent, ThreeJsAnimation} from '../../../services/threejs-animation';
-import {createThrottle} from '../../../services/throttle';
-import {VirResizeCanvas} from './vir-resize-canvas.element';
+import {FpsEvent, type ThreeJsAnimation} from '../../../services/threejs-animation.js';
+import {VirResizeCanvas} from './vir-resize-canvas.element.js';
 
 export const VirAnimation = defineElement<{
     animationEnabled: boolean;
@@ -22,27 +21,29 @@ export const VirAnimation = defineElement<{
     events: {
         fpsUpdate: defineElementEvent<number>(),
     },
-    stateInitStatic: {
-        canvas: undefined as undefined | HTMLCanvasElement,
-        canvasSize: undefined as undefined | Dimensions,
-        resizeListener: undefined as undefined | ((size: Dimensions) => void),
+    state() {
+        return {
+            canvas: undefined as undefined | HTMLCanvasElement,
+            canvasSize: undefined as undefined | Dimensions,
+            resizeDebounce: new Debounce(DebounceStyle.FirstThenLatest, {
+                milliseconds: 250,
+            }),
+        };
     },
-    renderCallback: ({state, inputs, dispatch, events, updateState}) => {
+    render({state, inputs, dispatch, events, updateState}) {
         if (inputs.animation) {
             if (!inputs.animation.isInitialized() && state.canvas) {
-                inputs.animation.init(
-                    state.canvas,
-                    inputs.animationEnabled,
-                    undefined,
-                    state.canvasSize,
-                );
-                inputs.animation.listen(FpsEvent, (event) => {
-                    dispatch(new events.fpsUpdate(event.detail));
+                inputs.animation.init({
+                    canvas: state.canvas,
+                    startAnimating: inputs.animationEnabled,
+                    size: state.canvasSize,
                 });
-                updateState({
-                    resizeListener: createThrottle((size: Dimensions) => {
-                        inputs.animation?.updateSize(size);
-                    }, 250),
+                inputs.animation.listen(FpsEvent, (event) => {
+                    dispatch(
+                        new events.fpsUpdate({
+                            detail: event.detail,
+                        }),
+                    );
                 });
             }
             if (inputs.animation.isInitialized()) {
@@ -53,15 +54,23 @@ export const VirAnimation = defineElement<{
         return html`
             <${VirResizeCanvas}
                 ${listen(VirResizeCanvas.events.canvasInit, (event) => {
-                    updateState({canvas: event.detail});
+                    updateState({
+                        canvas: event.detail,
+                    });
                 })}
                 ${listen(VirResizeCanvas.events.canvasResize, (event) => {
                     if (inputs.animation?.isDestroyed) {
                         return;
                     }
 
-                    state.resizeListener?.(event.detail);
-                    updateState({canvasSize: event.detail});
+                    if (inputs.animation?.isInitialized()) {
+                        state.resizeDebounce.execute(() => {
+                            inputs.animation?.updateSize(event.detail);
+                        });
+                    }
+                    updateState({
+                        canvasSize: event.detail,
+                    });
                 })}
             ></${VirResizeCanvas}>
         `;

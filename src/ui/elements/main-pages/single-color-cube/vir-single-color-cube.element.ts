@@ -1,11 +1,11 @@
-import {css, defineElementNoInputs, html, listen, perInstance} from 'element-vir';
-import {AnimationPage} from '../../animation/vir-animation-page.element';
-import {SingleColorCubeAnimation} from './single-color-cube.animation';
+import {css, defineElement, html, listen} from 'element-vir';
+import {AnimationPage} from '../../animation/vir-animation-page.element.js';
+import {SingleColorCubeAnimation} from './single-color-cube.animation.js';
 
 // https://github.com/mrdoob/three.js/blob/1396ee243314d73dd918b0789f260d6c85b5b683/docs/manual/en/introduction/Creating-a-scene.html
 // https://jsfiddle.net/Q4Jpu/
 
-export const VirSingleColorCube = defineElementNoInputs({
+export const VirSingleColorCube = defineElement()({
     tagName: 'vir-single-color-cube',
     styles: css`
         :host {
@@ -18,19 +18,23 @@ export const VirSingleColorCube = defineElementNoInputs({
             padding: 6px;
         }
     `,
-    stateInitStatic: {
-        animation: perInstance(() => new SingleColorCubeAnimation(0x00ff00)),
-        animationEnabled: true,
-        currentFps: 0,
+    state() {
+        return {
+            animation: new SingleColorCubeAnimation(0x00_ff_00),
+            animationEnabled: true,
+            currentFps: 0,
+        };
     },
-    renderCallback({state, updateState}) {
+    render({state, updateState}) {
         return html`
             <${AnimationPage.assign({
                 animationEnabled: state.animationEnabled,
                 animation: state.animation,
             })}
                 ${listen(AnimationPage.events.fps, (event) => {
-                    updateState({currentFps: event.detail});
+                    updateState({
+                        currentFps: event.detail,
+                    });
                 })}
             >
                 <h1>Single Color Cube</h1>
@@ -51,9 +55,11 @@ export const VirSingleColorCube = defineElementNoInputs({
                     <a href="https://jsfiddle.net/Q4Jpu/">resize support.</a>
                     <br />
                     <button
-                        @click=${() => {
-                            updateState({animation: new SingleColorCubeAnimation(0x00ff00)});
-                        }}
+                        ${listen('click', () => {
+                            updateState({
+                                animation: new SingleColorCubeAnimation(0x00_ff_00),
+                            });
+                        })}
                     >
                         reset
                     </button>

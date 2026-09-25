@@ -1,20 +1,21 @@
-import {getEnumTypedValues} from '@augment-vir/common';
-import {css, defineElementEvent, defineElementNoInputs, html} from 'element-vir';
-import {isJsonEqual} from 'run-time-assertions';
+import {check} from '@augment-vir/assert';
+import {getEnumValues} from '@augment-vir/common';
+import {css, defineElement, defineElementEvent, html} from 'element-vir';
 import {
-    ExperimentsFullRoute,
-    ExperimentsPage,
     defaultRoute,
+    ExperimentsPage,
     threeJsExperimentsRouter,
-} from '../../../../threejs-experiments-router';
-import {VirRouteLink} from './vir-route-link.element';
+    type ExperimentsFullRoute,
+} from '../../../../threejs-experiments-router.js';
+import {VirRouteLink} from './vir-route-link.element.js';
 
-export const VirAppNav = defineElementNoInputs({
+export const VirAppNav = defineElement()({
     tagName: 'vir-app-nav',
     styles: css`
         :host {
             display: block;
         }
+
         ul {
             padding: 16px;
             margin: 0;
@@ -22,39 +23,56 @@ export const VirAppNav = defineElementNoInputs({
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-        }
 
-        ul li {
-            padding: 1px 16px;
-            margin: 4px 0;
-            border: 1px solid grey;
-            border-width: 0 1px;
+            & li {
+                padding: 1px 16px;
+                margin: 4px 0;
+                border: 1px solid grey;
+                border-width: 0 1px;
+            }
         }
     `,
-    stateInitStatic: {
-        currentRoute: defaultRoute,
+    state() {
+        return {
+            currentRoute: defaultRoute,
+            removeRouteListener: undefined as undefined | (() => void),
+        };
     },
     events: {
         navUpdate: defineElementEvent<ExperimentsFullRoute>(),
     },
-    initCallback({updateState, dispatch, state, events}) {
-        threeJsExperimentsRouter.listen(true, (newRoute) => {
-            if (!isJsonEqual(state.currentRoute, newRoute)) {
-                updateState({currentRoute: newRoute});
-                dispatch(new events.navUpdate(newRoute));
+    init({updateState, dispatch, state, events}) {
+        const removeRouteListener = threeJsExperimentsRouter.listen(true, (newRoute) => {
+            if (!check.jsonEquals(state.currentRoute, newRoute)) {
+                updateState({
+                    currentRoute: newRoute,
+                });
+                dispatch(
+                    new events.navUpdate({
+                        detail: newRoute,
+                    }),
+                );
             }
         });
+        updateState({
+            removeRouteListener,
+        });
     },
-    renderCallback: () => {
+    cleanup({state}) {
+        state.removeRouteListener?.();
+    },
+    render() {
         return html`
             <ul>
-                ${getEnumTypedValues(ExperimentsPage).map((page) => {
+                ${getEnumValues(ExperimentsPage).map((page) => {
                     return html`
                         <li>
                             <${VirRouteLink.assign({
                                 route: {
                                     ...defaultRoute,
-                                    paths: [page],
+                                    paths: [
+                                        page,
+                                    ],
                                 },
                             })}></${VirRouteLink}>
                         </li>

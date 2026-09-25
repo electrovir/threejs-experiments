@@ -1,17 +1,7 @@
-import {Dimensions} from '@augment-vir/common';
-import {
-    css,
-    defineElementEvent,
-    defineElementNoInputs,
-    html,
-    onDomCreated,
-    onResize,
-} from 'element-vir';
+import {type Dimensions} from '@augment-vir/common';
+import {css, defineElement, defineElementEvent, html, onDomCreated, onResize} from 'element-vir';
 
-// store the canvas in a single place so we don't create multiple contexts
-let GlobalCanvas: undefined | HTMLCanvasElement = undefined;
-
-export const VirResizeCanvas = defineElementNoInputs({
+export const VirResizeCanvas = defineElement()({
     tagName: 'vir-resize-canvas',
     styles: css`
         :host {
@@ -22,62 +12,62 @@ export const VirResizeCanvas = defineElementNoInputs({
             box-sizing: border-box;
             overflow: hidden;
         }
+
         .canvas-wrapper {
             position: relative;
             height: 100%;
             width: 100%;
             box-sizing: border-box;
             overflow: hidden;
-        }
-        canvas {
-            /*
-                Don't let the canvas take up space. That way canvas-wrapper isn't stretched to fit
-                the canvas when it's really big (when animating, threeJS manually resizes the canvas
-                to set pixel values).
-            */
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black;
+
+            & canvas {
+                /*
+                    Don't let the canvas take up space. That way canvas-wrapper isn't stretched to
+                    fit the canvas when it's really big (when animating, threeJS manually resizes
+                    the canvas to set pixel values).
+                */
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                background-color: black;
+            }
         }
     `,
     events: {
         canvasInit: defineElementEvent<HTMLCanvasElement>(),
         canvasResize: defineElementEvent<Dimensions>(),
     },
-    renderCallback: ({dispatch, events}) => {
-        if (GlobalCanvas) {
-            dispatch(new events.canvasInit(GlobalCanvas));
-        }
+    render({dispatch, events}) {
         return html`
             <div
                 ${onResize((updateEntry) => {
                     dispatch(
                         new events.canvasResize({
-                            width: updateEntry.contentRect.width,
-                            height: updateEntry.contentRect.height,
+                            detail: {
+                                width: updateEntry.contentRect.width,
+                                height: updateEntry.contentRect.height,
+                            },
                         }),
                     );
                 })}
                 class="canvas-wrapper"
             >
-                ${GlobalCanvas
-                    ? GlobalCanvas
-                    : html`
-                          <canvas
-                              ${onDomCreated((element) => {
-                                  if (element instanceof HTMLCanvasElement) {
-                                      //   GlobalCanvas = element;
-                                      dispatch(new events.canvasInit(element));
-                                  } else {
-                                      throw new Error(
-                                          `Canvas DOM was created but didn't send back a canvas element.`,
-                                      );
-                                  }
-                              })}
-                          ></canvas>
-                      `}
+                <canvas
+                    ${onDomCreated((element) => {
+                        if (element instanceof HTMLCanvasElement) {
+                            dispatch(
+                                new events.canvasInit({
+                                    detail: element,
+                                }),
+                            );
+                        } else {
+                            throw new TypeError(
+                                'Canvas DOM was created but is not a canvas element.',
+                            );
+                        }
+                    })}
+                ></canvas>
             </div>
         `;
     },
